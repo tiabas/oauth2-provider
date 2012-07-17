@@ -2,7 +2,7 @@ require 'addressable/uri'
 
 module OAuth2
   module Server
-    class Request
+    class AbstractRequest
 
       RESPONSE_TYPES = [ :code, :token ]
       GRANT_TYPES = [ :authorization_code, :password, :client_credentials :refresh_token ]
@@ -50,7 +50,7 @@ module OAuth2
       end
 
       def redirect_uri_valid?
-        validate_redirect_uri
+        !!validate_redirect_uri
       rescue OAuth2Error::InvalidRequest => e
         false
       end
@@ -58,62 +58,10 @@ module OAuth2
       def redirect_uri
         @redirect_uri.nil? client_application.redirect_uri : validate_redirect_uri
       end
-
-      def authorization_code
-        # 
-        validate()
-        unless @response_type.to_sym == :code
-          raise OAuth2Error::UnsupportedResponseType, "The response type, #{@response_type}, is not valid for this request"
-        end
-        generate_authorization_code
-      end
-
-      def authorization_response
-        # {
-        #   :code => "2YotnFZFEjr1zCsicMWpAA", 
-        #   :state => "auth",
-        # }
-        response = { 
-          :code => authorization_code
-        }
-        response[:state] = state unless state.nil?
-        response 
-      end
-
-      def authorization_redirect_uri(allow=false) 
-        # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
-        build_response_uri authorization_response
-      end
-
-      def access_token
-        # {
-        #   :access_token => "2YotnFZFEjr1zCsicMWpAA", 
-        #   :token_type => "bearer",
-        #   :expires_in => 3600,
-        #   :refresh_token => "tGzv3JOkF0XG5Qx2TlKWIA",
-        # }
-        validate()
-        unless (@grant_type.nil? && @response_type.to_sym == :token)
-          raise OAuth2Error::UnsupportedResponseType, "The response type provided is not valid for this request"
-        end
-        generate_access_token.to_hash
-      end
-
-      def access_token_redirect_uri
-        # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
-        build_response_uri :fragment_params => access_token
-      end
       
     private
-      # convenience method to build response URI  
-      def build_response_uri(query_params=nil, fragment_params=nil)
-        uri = Addressable::URI.parse redirect_uri
-        uri.query_values = Addressable::URI.form_encode query_params unless query_params.nil?
-        uri.fragment = Addressable::URI.form_encode fragment_params unless fragment_params.nil?
-        return uri
-      end
 
-      def validate(&block)
+      def validate
         # check if we already ran validation
         return unless @validated.nil?
 
@@ -155,8 +103,6 @@ module OAuth2
         if @grant_type.to_sym == :refresh_token
           validate_refresh_token
         end
-
-        yield
         
         # cache validation result
         @validated = true
@@ -200,7 +146,7 @@ module OAuth2
           @errors[:user_credentials] << "password" if @password.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:user_credentials].join(", ")}"
         end
-        user = User.authenticate username, password
+        user = authenticate_user_credentials username, password
         return user unless user.nil?
         @errors[:credentials] = "Invalid username and/or password"
         raise OAuth2Error::AccessDenied, @errors[:credentials]
@@ -228,7 +174,7 @@ module OAuth2
       end
 
       def validate_scope
-        # FIX ME!!
+        verify_request_scope
         @errors[:scope] = "InvalidScope"
         raise OAuth2Error::InvalidScope, "FIX ME!!!!!!"
       end
@@ -258,19 +204,24 @@ module OAuth2
         @redirect_uri 
       end
 
+      def authenticate_user_credentials
+        raise NotImplementedError.new("You must implement #{name}.")
+      end
+
+      def authenticate_client_credentials
+        raise NotImplementedError.new("You must implement #{name}.")
+      end
+
+      def verify_client_id
+        raise NotImplementedError.new("You must implement #{name}.")
+      end
+
+      def verify_request_scope
+        raise NotImplementedError.new("You must implement #{name}.")
+      end
+
       def verify_authorization_code
-        # client_application.verify_code(@code)
-        raise "FIX ME!!!!!"
-      end
-
-      def generate_authorization_code
-        # client_application.generate_code 
-        raise "FIX ME!!!!!"
-      end
-
-      def generate_access_token
-        # client_application.generate_access_token
-        raise "FIX ME!!!!!"
+        raise NotImplementedError.new("You must implement #{name}.")
       end
     end
   end
