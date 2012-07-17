@@ -11,7 +11,7 @@ module OAuth2
       def authorization_code
         # 
         request.validate
-        unless @response_type.to_sym == :code
+        unless request.response_type_code?
           raise OAuth2Error::UnsupportedResponseType, "The response type, #{@response_type}, is not valid for this request"
         end
         generate_authorization_code
@@ -25,7 +25,7 @@ module OAuth2
         response = { 
           :code => authorization_code
         }
-        response[:state] = state unless state.nil?
+        response[:state] = request.state unless request.state.nil?
         response 
       end
 
@@ -42,7 +42,7 @@ module OAuth2
         #   :refresh_token => "tGzv3JOkF0XG5Qx2TlKWIA",
         # }
         request.validate
-        unless (@grant_type.nil? && @response_type.to_sym == :token)
+        unless (request.grant_type.nil? && request.response_type_token?)
           raise OAuth2Error::UnsupportedResponseType, "The response type provided is not valid for this request"
         end
         generate_access_token.to_hash

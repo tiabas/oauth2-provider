@@ -55,6 +55,14 @@ module OAuth2
         false
       end
 
+      def response_type_code?
+        @response_type.to_sym == :code
+      end
+
+      def response_type_token?
+        @response_type.to_sym == :token
+      end
+
       def redirect_uri
         @redirect_uri.nil? client_application.redirect_uri : validate_redirect_uri
       end
