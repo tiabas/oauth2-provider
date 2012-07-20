@@ -1,2 +1,2 @@
-require 'client/grant'
-require 'client/request'
+require 'oauth2/client/grant'
+require 'oauth2/client/request'

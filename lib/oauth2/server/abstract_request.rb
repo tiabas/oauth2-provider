@@ -5,7 +5,7 @@ module OAuth2
     class AbstractRequest
 
       RESPONSE_TYPES = [ :code, :token ]
-      GRANT_TYPES = [ :authorization_code, :password, :client_credentials :refresh_token ]
+      GRANT_TYPES = [ :authorization_code, :password, :client_credentials, :refresh_token ]
 
       attr_reader :response_type, :grant_type, :client_id, :client_secret, :state, :scope, 
                   :errors
@@ -64,7 +64,7 @@ module OAuth2
       end
 
       def redirect_uri
-        @redirect_uri.nil? client_application.redirect_uri : validate_redirect_uri
+        @redirect_uri.nil? ? client_application.redirect_uri : validate_redirect_uri
       end
       
     private

@@ -5,15 +5,10 @@ module OAuth2
     class Error < StandardError
 
       attr_reader :code, :error
-      
-      def self.new
-        raise "#{ self.class.to_s} is an abstract class!"
-      end
 
-      def initialize(msg)
-        message = ["OAuth Error #{ self.class.to_s} "]
-        message << msg 
-        super(message.join(","))
+      def initialize(msg=nil)
+        message = msg || "OAuth Error: #{ self.class.to_s.downcase }"
+        super message
         @error = "#{ self.class.to_s}"
         @code = 400
       end
@@ -22,11 +17,16 @@ module OAuth2
         message
       end
 
-      def to_uri_component
-        Addressable::URI.form_encode({
+      def to_hsh
+        {
           :error             => error,
-          :error_description => error_description
-        })
+          :error_description => error_description,
+          :code              => code
+        }
+      end
+
+      def to_uri_component
+        Addressable::URI.form_encode to_hsh
       end
     end
   end

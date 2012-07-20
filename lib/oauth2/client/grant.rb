@@ -44,7 +44,7 @@ module OAuth2
       end
     end
 
-    class PasswordCredentials < Base
+    class Password < Base
       def initialize(params)
           if not (params[:username] and params[:password])
               raise "username and  password must be provided"

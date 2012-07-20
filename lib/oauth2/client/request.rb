@@ -21,7 +21,7 @@ module OAuth2
           scheme
         end
         
-        def initialize(auth_type, params, scheme, host, authorize_path=nil, token_path=nil, method="POST" port=80)
+        def initialize(auth_type, params, scheme, host, authorize_path=nil, token_path=nil, method="POST", port=80)
           @authorize_path = authorize_path || @@authorize_path
           @token_path = token_path || @@token_path
           @scheme = self.class.verified_scheme(scheme)
