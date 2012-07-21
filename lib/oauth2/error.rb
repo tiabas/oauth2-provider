@@ -30,11 +30,11 @@ module OAuth2
       end
     end
 
-   class InvalidClient < Error
+    class InvalidClient < Error
       def initialize
         super
         @code = 401 
-      end
+        end
     end
 
     class InvalidGrant < Error; end
@@ -55,15 +55,14 @@ module OAuth2
       end
     end
 
-   class UnauthorizedClient < Error
+    class UnauthorizedClient < Error
       def initialize
         super
         @code = 401 
       end
     end
 
-  class UnsupportedGrantType < Error; end
-  class UnsupportedResponseType < Error; end
-
+    class UnsupportedGrantType < Error; end
+    class UnsupportedResponseType < Error; end
   end
 end
