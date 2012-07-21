@@ -1,7 +1,7 @@
 module OAUTH2
   module Server
     module AccessToken
-    	module InstanceMethods
+      module InstanceMethods
 
       # generate token
       def generate_token
@@ -15,12 +15,12 @@ module OAUTH2
 
       # to_hsh
       def to_hsh
-      	{
-      		:token => token,
-      		:token_type => token_type,
-      		:expires_in => expires_in,
-      		:refresh_token => refresh_token
-      	}
+        {
+          :token => token,
+          :token_type => token_type,
+          :expires_in => expires_in,
+          :refresh_token => refresh_token
+        }
       end
     end
   end

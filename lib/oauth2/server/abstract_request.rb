@@ -11,7 +11,7 @@ module OAuth2
                   :errors
 
       def self.from_http_request
-        # create request from http headers
+      # create request from http headers
       end
 
       def initialize(opts={})
