@@ -1,5 +1,7 @@
 require 'addressable/uri'
 
+# This class handles the OAuth2 token creation and exchange process
+
 module OAuth2
   module Server
     class AbstractRequest
@@ -130,7 +132,7 @@ module OAuth2
         if @client_id.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameters: client_id"
         end
-        @client_application = OauthClientApplication.verify_id client_id
+        @client_application = verify_client_id client_id
         return @client_application unless @client_application.nil?
         raise OAuth2Error::InvalidClient
       end
@@ -142,7 +144,7 @@ module OAuth2
           @errors[:client] << "client_secret" if @client_secret.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:client].join(", ")}"
         end
-        authenticated = OauthClientApplication.authenticate @client_id, @client_secret
+        authenticated = authenticate_client_credentials @client_id, @client_secret
         @errors[:client] = "Unauthorized Client"
         raise OAuth2Error::UnauthorizedClient, @errors[:client] 
       end
@@ -212,24 +214,24 @@ module OAuth2
         @redirect_uri 
       end
 
-      def authenticate_user_credentials
-        raise NotImplementedError.new("You must implement #{name}.")
+      def authenticate_client_credentials
+        client_application.authenticate client_secret
       end
 
-      def authenticate_client_credentials
-        raise NotImplementedError.new("You must implement #{name}.")
+      def authenticate_user_credentials
+        raise NotImplementedError
       end
 
       def verify_client_id
-        raise NotImplementedError.new("You must implement #{name}.")
+        raise NotImplementedError
       end
 
       def verify_request_scope
-        raise NotImplementedError.new("You must implement #{name}.")
+        raise NotImplementedError
       end
 
       def verify_authorization_code
-        raise NotImplementedError.new("You must implement #{name}.")
+        raise NotImplementedError
       end
     end
   end

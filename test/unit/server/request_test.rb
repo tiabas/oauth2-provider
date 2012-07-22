@@ -11,7 +11,7 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     @access_token = '2YotnFZFEjr1zCsicMWpAA'
     @refresh_token = 'tGzv3JOkF0XG5Qx2TlKWIA'
     @expires_in = 3600
-    @token_type = 'Bearer'
+    @token_type = 'bearer'
     @token_response = {
                         :access_token => @access_token,
                         :refresh_token => @refresh_token
@@ -27,7 +27,6 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
                         :redirect_uri => 'http://client.example.com/oauth_v2/cb',
                         :state => 'xyz'
                         })
-    redirect_uri = "http://client.example.com/oauth_v2/cb?code=#{@code}&state=xyz"
     assert_equal redirect_uri, c.authorization_redirect_uri 
   end
 

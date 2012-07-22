@@ -1,17 +1,6 @@
 module OAUTH2
   module Server
-    module AccessToken
-      module InstanceMethods
-
-      # generate token
-      def generate_token
-
-      end
-      
-      # generate refresh token
-      def generate_refresh_token
-
-      end
+    module AccessTokenMethods
 
       # to_hsh
       def to_hsh
@@ -22,6 +11,6 @@ module OAUTH2
           :refresh_token => refresh_token
         }
       end
-    end
+
   end
 end
