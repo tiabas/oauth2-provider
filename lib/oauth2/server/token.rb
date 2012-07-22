@@ -11,6 +11,6 @@ module OAUTH2
           :refresh_token => refresh_token
         }
       end
-
+    end
   end
 end

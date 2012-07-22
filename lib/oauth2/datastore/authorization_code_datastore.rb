@@ -1,7 +1,7 @@
 module OAuth2
   module DataStore
     class AuthorizationCodeDataStore < MockDataStore
-        Include OAuth2::Helper
+        include OAuth2::Helper
 
         private_class_method :new
 
@@ -10,7 +10,7 @@ module OAuth2
                 :code => OAuth2::Helper.generate_urlsafe_key,
                 :client_id => c_id
               )
-          self.instances || = []
+          self.instances ||= []
           self.instances << kode
         end
 

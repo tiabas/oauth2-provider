@@ -1,8 +1,7 @@
 module OAuth2
   module DataStore
     class AccessTokenDataStore < MockDataStore
-      Include OAuth2::Helper
-      Include OAuth2::Server::AccessTokenMethods
+      include OAuth2::Helper
 
       SCOPES = %w{ scope1 scope2 scope3 }
       
@@ -22,14 +21,14 @@ module OAuth2
                   :client_id => cid,
                   :user_id => uid,
                   :token => generate_urlsafe_key,
-                  :token_type => token_type
+                  :token_type => token_type,
                   :refresh_token => generate_urlsafe_key,
                   :expires_in => expires_in,
                   :active => true,
                   :updated_at => Time.now,
                   :created_at => Time.now
                   )
-        self.class.instances || = []
+        self.class.instances ||= []
         self.class.instances << token
       end
 

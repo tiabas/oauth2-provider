@@ -18,7 +18,7 @@ module OAuth2
           :client_id => self.class.create_client_id,
           :client_secret => self.class.create_client_secret
         })
-        self.class.instances || = []
+        self.class.instances ||= []
         self.class.instances << self
       end
 

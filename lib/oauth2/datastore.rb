@@ -21,6 +21,6 @@ module OAuth2
   end
 end
 
-require 'datastore/access_token'
-require 'datastore/authorization_code'
-require 'datastore/client_application'
+require 'oauth2/datastore/access_token_datastore'
+require 'oauth2/datastore/authorization_code_datastore'
+require 'oauth2/datastore/client_application_datastore'

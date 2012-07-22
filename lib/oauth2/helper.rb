@@ -20,7 +20,7 @@ module OAuth2
       size = size - seed.length
       Base64.urlsafe_encode64("#{ OpenSSL::Random.random_bytes(size) }#{ seed }").gsub(/\W/, '')
     end
-    alias_method :generate_nonce, :generate_key
+    alias_method :generate_nonce, :generate_urlsafe_key
 
     def generate_timestamp #:nodoc:
       Time.now.to_i.to_s
