@@ -9,7 +9,9 @@ module OAuth2
 
       def initialize(name, website, description, client_type, redirect_uri)
         super
+        self.instances ||= []
         self.merge({
+          :id => self.instances.length,
           :name => name,
           :website => website,
           :description => description,
@@ -18,7 +20,6 @@ module OAuth2
           :client_id => self.class.create_client_id,
           :client_secret => self.class.create_client_secret
         })
-        self.class.instances ||= []
         self.class.instances << self
       end
 

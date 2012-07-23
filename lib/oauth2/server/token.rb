@@ -1,4 +1,4 @@
-module OAUTH2
+module OAuth2
   module Server
     module AccessTokenMethods
 

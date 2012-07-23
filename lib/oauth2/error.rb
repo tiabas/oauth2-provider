@@ -1,5 +1,3 @@
-require 'addressable/uri'
-
 module OAuth2
   module OAuth2Error
     class Error < StandardError

@@ -1,21 +1,24 @@
 module OAuth2
   module DataStore
     class MockDataStore < Hash
-      class << self; attr_reader :instances; end
+      class << self
+        attr_accessor :instances
 
-      def find(attrs={})
-        found = nil
-        index = 0
-        store = self.class.instances
-        while index < store.length do
-          match = true
-          target = store[index] 
-          attrs.each do |k, v|
-            match = match & (target[k.to_sym] == v)
+        def find(attrs={})
+          found = nil
+          index = 0
+          store = self.instances
+          while index < store.length do
+            match = true
+            target = store[index] 
+            attrs.each do |k, v|
+              match = match & (target[k.to_sym] == v)
+            end
+            break if match
           end
-          break if match
+          target
         end
-        target
+
       end
     end
   end

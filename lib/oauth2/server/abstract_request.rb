@@ -10,7 +10,7 @@ module OAuth2
       GRANT_TYPES = [ :authorization_code, :password, :client_credentials, :refresh_token ]
 
       attr_reader :response_type, :grant_type, :client_id, :client_secret, :state, :scope, 
-                  :errors
+                  :errors, :username, :password, :code
 
       def self.from_http_request
       # create request from http headers
@@ -68,12 +68,16 @@ module OAuth2
       def redirect_uri
         @redirect_uri.nil? ? client_application.redirect_uri : validate_redirect_uri
       end
-      
-    private
+
+      def valid?
+        validate
+      end
 
       def validate
         # check if we already ran validation
         return unless @validated.nil?
+
+        @validated = false
 
         # REQUIRED: Check that client_id is valid
         validate_client_id
@@ -132,7 +136,7 @@ module OAuth2
         if @client_id.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameters: client_id"
         end
-        @client_application = verify_client_id client_id
+        @client_application = verify_client_id
         return @client_application unless @client_application.nil?
         raise OAuth2Error::InvalidClient
       end
@@ -150,33 +154,37 @@ module OAuth2
       end
 
       def validate_user_credentials
-        if @username.nil? || @password.nil?
-          @errors[:user_credentials] = []
-          @errors[:user_credentials] << "username" if @username.nil?
-          @errors[:user_credentials] << "password" if @password.nil?
+        if username.nil? || password.nil?
+          errors[:user_credentials] = []
+          errors[:user_credentials] << "username" if @username.nil?
+          errors[:user_credentials] << "password" if @password.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:user_credentials].join(", ")}"
         end
         user = authenticate_user_credentials username, password
         return user unless user.nil?
-        @errors[:credentials] = "Invalid username and/or password"
+        errors[:credentials] = "Invalid username and/or password"
         raise OAuth2Error::AccessDenied, @errors[:credentials]
       end
 
       def validate_response_type
-        return RESPONSE_TYPES.include? @response_type.to_sym
-        @errors[:response_type] = "Invalid response type"
+        if response_type.nil?
+          raise OAuth2Error::InvalidRequest, "Missing parameter: response_type"
+        end
+        return RESPONSE_TYPES.include? response_type.to_sym
         raise OAuth2Error::UnsupportedResponseType
       end
 
       def validate_grant_type
-        return GRANT_TYPES.include? @grant_type.to_sym
-        @errors[:grant_type] = "Unsupported grant type"
+        if response_type.nil?
+          raise OAuth2Error::InvalidRequest, "Missing parameter: grant_type"
+        end
+        return GRANT_TYPES.include? grant_type.to_sym
         raise OAuth2Error::UnsupportedGrantType
       end
 
       def validate_refresh_token
         if @refresh_token.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: refresh_token"
+          raise OAuth2Error::InvalidRequest, "Missing parameter: refresh_token"
         end
         token = verify_refresh_token
         return true unless token.nil?
@@ -213,6 +221,8 @@ module OAuth2
         end
         @redirect_uri 
       end
+
+    private
 
       def authenticate_client_credentials
         client_application.authenticate client_secret
