@@ -124,11 +124,10 @@ module OAuth2
       end
 
       def validate_authorization_code
-        if code.nil?
+        unless code
           raise OAuth2Error::InvalidRequest, "Missing parameters: code"
         end
-        return true if verify_authorization_code
-        raise OAuth2Error::UnauthorizedClient, "Authorization code provided did not match client"
+        true
       end
 
       def validate_client_id
@@ -141,16 +140,13 @@ module OAuth2
       end
 
       def validate_client_credentials
-        if client_id.nil? || client_secret.nil?
+        unless client_id.nil? && client_secret.nil?
           errors[:client] = []
           errors[:client] << "client_id" if client_id.nil?
           errors[:client] << "client_secret" if client_secret.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:client].join(", ")}"
+          raise OAuth2Error::InvalidRequest, "Missing parameters: #{errors[:client].join(", ")}"
         end
-        authenticated = authenticate_client_credentials
-        return true if authenticated
-        errors[:client] = "Unauthorized Client"
-        raise OAuth2Error::UnauthorizedClient, errors[:client] 
+        true
       end
 
       def validate_user_credentials
@@ -158,12 +154,9 @@ module OAuth2
           errors[:user_credentials] = []
           errors[:user_credentials] << "username" if username.nil?
           errors[:user_credentials] << "password" if password.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:user_credentials].join(", ")}"
+          raise OAuth2Error::InvalidRequest, "Missing parameters: #{errors[:user_credentials].join(", ")}"
         end
-        user = authenticate_user_credentials username, password
-        return user unless user.nil?
-        errors[:credentials] = "Invalid username and/or password"
-        raise OAuth2Error::AccessDenied, errors[:credentials]
+        true
       end
 
       def validate_response_type
@@ -220,23 +213,7 @@ module OAuth2
 
     private
 
-      def authenticate_client_credentials
-        client_application.authenticate client_secret
-      end
-
-      def authenticate_user_credentials
-        raise NotImplementedError
-      end
-
       def verify_client_id
-        raise NotImplementedError
-      end
-
-      def verify_request_scope
-        raise NotImplementedError
-      end
-
-      def verify_authorization_code
         raise NotImplementedError
       end
     end
