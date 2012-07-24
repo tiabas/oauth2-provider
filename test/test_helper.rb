@@ -13,4 +13,12 @@ class MiniTest::Unit::TestCase
     end
     client
   end
+
+  def create_user
+    user = Object.new
+    (class << user; self; end).class_eval do
+      define_method(:authenticate) {|username, password| true }
+    end
+    user
+  end
 end

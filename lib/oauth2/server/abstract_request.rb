@@ -10,7 +10,7 @@ module OAuth2
       GRANT_TYPES = [ :authorization_code, :password, :client_credentials, :refresh_token ]
 
       attr_reader :response_type, :grant_type, :client_id, :client_secret, :state, :scope, 
-                  :errors, :username, :password, :code
+                  :errors, :username, :password, :code, :refresh_token
 
       def self.from_http_request
       # create request from http headers
@@ -27,6 +27,7 @@ module OAuth2
         @code          = opts[:code]
         @username      = opts[:username]
         @password      = opts[:password]
+        @refresh_token = opts[:refresh_token]
         @errors        = {}
         @validated     = nil
       end
@@ -94,7 +95,7 @@ module OAuth2
         validate_grant_type unless grant_type.nil?
 
         # validate redirect uri if given grant_type is authorization_code or response_type is token
-        if response_type.to_sym == :token || grant_type.to_sym == :authorization_code
+        if response_type.to_sym == :token || response_type.to_sym == :code
           validate_redirect_uri
         end
 
@@ -126,10 +127,8 @@ module OAuth2
         if code.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameters: code"
         end
-        unless verify_authorization_code
-          raise OAuth2Error::UnauthorizedClient, "Authorization code provided did not match client"
-        end
-        code
+        return true if verify_authorization_code
+        raise OAuth2Error::UnauthorizedClient, "Authorization code provided did not match client"
       end
 
       def validate_client_id
@@ -142,7 +141,7 @@ module OAuth2
       end
 
       def validate_client_credentials
-        if client_id.nil? && client_secret.nil?
+        if client_id.nil? || client_secret.nil?
           errors[:client] = []
           errors[:client] << "client_id" if client_id.nil?
           errors[:client] << "client_secret" if client_secret.nil?
@@ -184,12 +183,8 @@ module OAuth2
       end
 
       def validate_refresh_token
-        if refresh_token.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameter: refresh_token"
-        end
-        token = verify_refresh_token
-        return true unless token.nil?
-        raise OAuth2Error::InvalidRequest, "Invalid refresh token" 
+        return true unless refresh_token.nil?
+        raise OAuth2Error::InvalidRequest, "Missing parameter: refresh_token"
       end
 
       def validate_scope

@@ -28,39 +28,15 @@ module OAuth2
       end
     end
 
-    class InvalidClient < Error
-      def initialize
-        super
-        @code = 401 
-        end
-    end
-
+    class AccessDenied < Error; end
+    class InvalidClient < Error; end
     class InvalidGrant < Error; end
     class InvalidRequest < Error; end
     class InvalidScope < Error; end
-
-    class ServerError < Error
-      def initialize
-        super
-        @code = 401 
-      end
-    end
-
-    class TemporarilyUnavailable < Error
-      def initialize
-        super
-        @code = 401 
-      end
-    end
-
-    class UnauthorizedClient < Error
-      def initialize
-        super
-        @code = 401 
-      end
-    end
-
+    class ServerError < Error; end
+    class UnauthorizedClient < Error; end
     class UnsupportedGrantType < Error; end
     class UnsupportedResponseType < Error; end
+    class TemporarilyUnavailable < Error; end
   end
 end
