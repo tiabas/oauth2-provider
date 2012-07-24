@@ -148,7 +148,8 @@ module OAuth2
           errors[:client] << "client_secret" if client_secret.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:client].join(", ")}"
         end
-        authenticated = authenticate_client_credentials client_id, client_secret
+        authenticated = authenticate_client_credentials
+        return true if authenticated
         errors[:client] = "Unauthorized Client"
         raise OAuth2Error::UnauthorizedClient, errors[:client] 
       end

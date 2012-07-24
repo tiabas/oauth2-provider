@@ -12,6 +12,7 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     @refresh_token = 'tGzv3JOkF0XG5Qx2TlKWIA'
     @expires_in = 3600
     @token_type = 'bearer'
+    @redirect_uri = create_redirect_uri
     @token_response = {
                         :access_token => @access_token,
                         :refresh_token => @refresh_token,
@@ -21,10 +22,11 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     @request = OAuth2::Server::AbstractRequest.new({
                         :client_id => @client_id,
                         :response_type => 'code',
-                        :redirect_uri => 'http://client.example.com/oauth_v2/cb',
+                        :redirect_uri => @redirect_uri,
                         :state => 'xyz'
                         })
-    OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(true)
+    @dummy_client_app = create_client_application
+    OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(@dummy_client_app)
   end
   
   ### TODO:create single request instance for NotImplementedError test
@@ -43,15 +45,15 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     end 
   end
 
-  def test_should_return_true_with_valid_client_id
-    assert_equal true, @request.validate_client_id
+  def test_should_return_client_with_valid_client_id
+    assert_equal @dummy_client_app, @request.validate_client_id
   end
 
   def test_should_raise_invalid_request_error_with_missing_response_type
     request = OAuth2::Server::AbstractRequest.new({
                         :client_id => @client_id,
                         :response_type => nil,
-                        :redirect_uri => 'http://client.example.com/oauth_v2/cb',
+                        :redirect_uri => @redirect_uri,
                         :state => 'xyz'
                         })
     assert_raises OAuth2::OAuth2Error::InvalidRequest do
@@ -63,7 +65,7 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     request = OAuth2::Server::AbstractRequest.new({
                         :client_id => @client_id,
                         :response_type => 'fake',
-                        :redirect_uri => 'http://client.example.com/oauth_v2/cb',
+                        :redirect_uri => @redirect_uri,
                         :state => 'xyz'
                         })
     assert_raises OAuth2::OAuth2Error::UnsupportedResponseType do
@@ -71,11 +73,11 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     end 
   end
 
-  def test_should_raise_invalid_request_error_with_missing_response_type
+  def test_should_raise_invalid_request_error_with_missing_grant_type
     request = OAuth2::Server::AbstractRequest.new({
                         :client_id => @client_id,
                         :grant_type => nil,
-                        :redirect_uri => 'http://client.example.com/oauth_v2/cb',
+                        :redirect_uri => @redirect_uri,
                         :state => 'xyz'
                         })
     assert_raises OAuth2::OAuth2Error::InvalidRequest do
@@ -87,7 +89,7 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     request = OAuth2::Server::AbstractRequest.new({
                         :client_id => @client_id,
                         :grant_type => 'fake',
-                        :redirect_uri => 'http://client.example.com/oauth_v2/cb',
+                        :redirect_uri => @redirect_uri,
                         :state => 'xyz'
                         })
     assert_raises OAuth2::OAuth2Error::UnsupportedGrantType do
@@ -95,14 +97,109 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     end 
   end
 
-  # def test_authorization_code_grant_should_return_access_token
-  #   c = OAuth2::Server::Request.new({
-  #                       :client_id => @client_id,
-  #                       :grant_type => 'authorization_code',
-  #                       :code => @code
-  #                       })
-  #   assert_equal @token_response, JSON.parse(c.access_token)
-  # end
+  def test_should_return_redirect_uri_when_grant_type_is_authorization_code
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'authorization_code',
+                        :redirect_uri => @redirect_uri,
+                        :state => 'xyz'
+                        })
+    OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(@dummy_client_app)
+    assert_equal @redirect_uri, request.validate_redirect_uri
+  end
+
+  def test_should_return_redirect_uri_when_response_type_is_token
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'token',
+                        :redirect_uri => @redirect_uri,
+                        :state => 'xyz'
+                        })
+    OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(@dummy_client_app)
+    assert_equal @redirect_uri, request.validate_redirect_uri
+  end
+
+  def test_should_return_nil_when_response_type_authorization_code_and_redirect_uri_nil
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'authorization_code',
+                        :state => 'xyz'
+                        })
+    OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(@dummy_client_app)
+    assert_equal nil, request.validate_redirect_uri
+  end
+
+  def test_should_return_nil_when_response_type_token_and_redirect_uri_nil
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'token',
+                        :state => 'xyz'
+                        })
+    OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(@dummy_client_app)
+    assert_equal nil, request.validate_redirect_uri
+  end
+
+  def test_should_throw_exception_when_response_type_authorization_code_and_redirect_uri_does_not_match
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'authorization_code',
+                        :redirect_uri => 'https://client.example2.com/oauth_v2/cb',
+                        :state => 'xyz'
+                        })
+    OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(@dummy_client_app)
+    assert_raises OAuth2::OAuth2Error::InvalidRequest do
+      request.validate_redirect_uri
+    end
+  end
+
+  def test_should_raise_invalid_request_with_username_and_password_missing_and_grant_type_is_client_credentials
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'password',
+                        :redirect_uri => @redirect_uri
+                        })
+    assert_raises OAuth2::OAuth2Error::InvalidRequest do
+      request.validate_user_credentials
+    end
+  end
+
+  def test_should_raise_invalid_request_with_username_missing_and_grant_type_is_user_credentials
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'password',
+                        :redirect_uri => @redirect_uri,
+                        :username => 'benutzername'
+                        })
+    assert_raises OAuth2::OAuth2Error::InvalidRequest do
+      request.validate_user_credentials
+    end
+  end
+
+  def test_should_raise_invalid_request_with_password_missing_and_grant_type_is_user_credentials
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'password',
+                        :redirect_uri => @redirect_uri,
+                        :password => 'kennwort'
+                        })
+    assert_raises OAuth2::OAuth2Error::InvalidRequest do
+      request.validate_user_credentials
+    end
+  end
+
+  def test_should_raise_invalid_request_with_username_and_password_missing_and_grant_type_is_user_credentials
+    benutzername = 'benutzername'
+    kennwort = 'passwort'
+    request = OAuth2::Server::AbstractRequest.new({
+                        :client_id => @client_id,
+                        :grant_type => 'password',
+                        :redirect_uri => @redirect_uri,
+                        :username => benutzername,
+                        :password => kennwort
+                        })
+    OAuth2::Server::AbstractRequest.any_instance.stubs(:authenticate_user_credentials).with(benutzername, kennwort).returns(true)
+    assert_equal true, request.validate_user_credentials
+  end
   
   # def test_implicit_grant_authorization_request_should_return_access_token
   #   c = OAuth2::Server::Request.new({

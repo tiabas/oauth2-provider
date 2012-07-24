@@ -25,7 +25,7 @@ module OAuth2
 
       def authorization_redirect_uri(allow=false) 
         # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
-        build_response_uri authorization_response
+        build_response_uri request.redirect_uri, authorization_response
       end
 
       def access_token(request)
@@ -44,13 +44,13 @@ module OAuth2
 
       def access_token_redirect_uri
         # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
-        build_response_uri :fragment_params => access_token
+        build_response_uri request.redirect_uri, nil, access_token
       end
 
       private
 
       # convenience method to build response URI  
-      def build_response_uri(query_params=nil, fragment_params=nil)
+      def build_response_uri(redirect_uri, query_params=nil, fragment_params=nil)
         uri = Addressable::URI.parse redirect_uri
         uri.query_values = Addressable::URI.form_encode query_params unless query_params.nil?
         uri.fragment = Addressable::URI.form_encode fragment_params unless fragment_params.nil?
