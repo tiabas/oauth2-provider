@@ -4,13 +4,15 @@ require 'addressable/uri'
 
 module OAuth2
   module Server
-    class AbstractRequest
+    class Request
 
       RESPONSE_TYPES = [ :code, :token ]
       GRANT_TYPES = [ :authorization_code, :password, :client_credentials, :refresh_token ]
 
       attr_reader :response_type, :grant_type, :client_id, :client_secret, :state, :scope, 
-                  :errors, :username, :password, :code, :refresh_token
+                  :errors, :username, :password, :code, :refresh_token, :redirect_uri
+      
+      attr_accessor :validated
 
       def self.from_http_request
       # create request from http headers
@@ -30,14 +32,6 @@ module OAuth2
         @refresh_token = opts[:refresh_token]
         @errors        = {}
         @validated     = nil
-      end
-
-      def client_application
-        @client_application || validate_client_id
-      end
-
-      def client_valid?
-        !!client_application
       end
 
       def grant_type_valid?
@@ -66,19 +60,15 @@ module OAuth2
         response_type.to_sym == :token
       end
 
-      def redirect_uri
-        @redirect_uri.nil? ? client_application.redirect_uri : validate_redirect_uri
-      end
-
       def valid?
         validate
       end
 
       def validate
         # check if we already ran validation
-        return unless @validated.nil?
+        return @validated unless @validated.nil?
 
-        @validated = false
+        validated = false
 
         # REQUIRED: Check that client_id is valid
         validate_client_id
@@ -94,53 +84,43 @@ module OAuth2
         # validate grant_type if given
         validate_grant_type unless grant_type.nil?
 
-        # validate redirect uri if given grant_type is authorization_code or response_type is token
+        # validate redirect uri if grant_type is authorization_code or response_type is token
         if response_type.to_sym == :token || response_type.to_sym == :code
           validate_redirect_uri
         end
 
-        # validate code if grant_type is client_credentials
         if grant_type.to_sym == :client_credentials
+        # validate code if grant_type is client_credentials
           validate_client_credentials
-        end
-
+        elsif grant_type.to_sym == :authorization_code
         # validate code if grant_type is authorization_code
-        if grant_type.to_sym == :authorization_code
           validate_authorization_code
-        end
-
+        elsif grant_type.to_sym == :password
         # validate user credentials if grant_type is password
-        if grant_type.to_sym == :password
           validate_user_credentials
-        end
-
+        elsif grant_type.to_sym == :refresh_token
         # validate user credentials if grant_type is password
-        if grant_type.to_sym == :refresh_token
           validate_refresh_token
         end
         
         # cache validation result
-        @validated = true
+        validated = true
       end
 
+    private
+    
       def validate_authorization_code
-        unless code
-          raise OAuth2Error::InvalidRequest, "Missing parameters: code"
-        end
-        true
+        return true unless code.nil?
+        raise OAuth2Error::InvalidRequest, "Missing parameters: code"
       end
 
       def validate_client_id
-        if client_id.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: client_id"
-        end
-        @client_application = verify_client_id
-        raise OAuth2Error::InvalidClient if @client_application.nil?
-        @client_application
+        return true unless client_id.nil?
+        raise OAuth2Error::InvalidRequest, "Missing parameters: client_id"
       end
 
       def validate_client_credentials
-        unless client_id.nil? && client_secret.nil?
+        unless client_id && client_secret
           errors[:client] = []
           errors[:client] << "client_id" if client_id.nil?
           errors[:client] << "client_secret" if client_secret.nil?
@@ -187,11 +167,11 @@ module OAuth2
       end
 
       def validate_redirect_uri
-        return if @redirect_uri.nil?
+        return true if redirect_uri.nil?
         
         errors[:redirect_uri] = []
 
-        uri = Addressable::URI.parse(@redirect_uri)
+        uri = Addressable::URI.parse(redirect_uri)
         unless uri.scheme == "https" 
             errors[:redirect_uri] << "URI scheme is unsupported"
         end
@@ -205,16 +185,7 @@ module OAuth2
           raise OAuth2Error::InvalidRequest, errors[:redirect_uri].join(", ")
         end
 
-        unless client_application.redirect_uri == @redirect_uri
-          raise OAuth2Error::InvalidRequest, "Redirect URI does not match the one on record"
-        end
-        @redirect_uri 
-      end
-
-    private
-
-      def verify_client_id
-        raise NotImplementedError
+        redirect_uri 
       end
     end
   end
