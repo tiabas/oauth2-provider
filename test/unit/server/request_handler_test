@@ -1,0 +1,89 @@
+
+  # def test_should_throw_exception_when_response_type_code_and_redirect_uri_does_not_match
+  #   request = OAuth2::Server::AbstractRequest.new({
+  #                       :client_id => @client_id,
+  #                       :grant_type => 'code',
+  #                       :redirect_uri => 'https://client.example2.com/oauth_v2/cb',
+  #                       :state => 'xyz'
+  #                       })
+  #   request.expects(:verify_client_id).returns(@dummy_client_app)
+  #   assert_raises OAuth2::OAuth2Error::InvalidRequest do
+  #     request.validate_redirect_uri
+  #   end
+  # end
+
+  # def test_should_raise_invalid_request_error_with_invalid_client_id
+  #   OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(nil)
+  #   assert_raises OAuth2::OAuth2Error::InvalidClient do
+  #     @request.validate_client_id
+  #   end 
+  # end
+
+  # def test_should_raise_unauthorized_client_with_invalid_client_secret_grant_type_is_client_credentials
+  #   request = OAuth2::Server::AbstractRequest.new({
+  #                       :client_id => @client_id,
+  #                       :grant_type => 'client_credentials',
+  #                       :redirect_uri => @redirect_uri,
+  #                       :client_secret => @client_secret
+  #                       })
+  #   OAuth2::Server::AbstractRequest.any_instance.stubs(:authenticate_client_credentials).returns(false)
+  #   assert_raises OAuth2::OAuth2Error::UnauthorizedClient do
+  #     request.validate_client_credentials
+  #   end
+  # end
+
+  # def test_should_raise_unauthorized_client_with_grant_type_client_credentials_and_invalid_code
+  #   request = OAuth2::Server::AbstractRequest.new({
+  #                       :client_id => @client_id,
+  #                       :grant_type => 'authorization_code',
+  #                       :redirect_uri => @redirect_uri,
+  #                       :code => @code
+  #                       })
+  #   request.expects(:verify_authorization_code).returns(false)
+  #     assert_raises OAuth2::OAuth2Error::UnauthorizedClient do
+  #     request.validate_authorization_code
+  #   end
+  # end
+  
+  # def test_implicit_grant_authorization_request_should_return_access_token
+  #   c = OAuth2::Server::Request.new({
+  #                       :client_id => @client_id,
+  #                       :response_type => 'token',
+  #                       :redirect_uri => 'http://client.example.com/oauth_v2/cb',
+  #                       :state => 'xyz',
+  #                       })
+  #   # should stub request#access_token
+  #   redirect_uri = 'http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600'
+  #   assert_equal redirect_uri, c.access_token_redirect_uri
+  # end
+
+  # def test_resource_owner_credentials_should_return_access_token
+  #   c = OAuth2::Server::Request.new({
+  #                       :client_id => @client_id,
+  #                       :grant_type => 'password',
+  #                       :username => 'johndoe',
+  #                       :password => 'A3ddj3w'
+  #                       })
+  #   # should stub request#access_token
+  #   assert_equal @token_response, JSON.parse(c.access_token)
+  # end
+  
+  # def test_client_credentials_should_return_access_token
+  #   c = OAuth2::Server::Request.new({
+  #                       :client_id => @client_id,
+  #                       :client_secret => @client_secret,
+  #                       :grant_type => 'client_credentials'
+  #                       })
+  #   # should stub request#access_token
+  #   assert_equal @token_response, JSON.parse(c.access_token)
+  # end
+
+  # def test_refresh_token_request_should_return_access_token
+  #   c = OAuth2::Server::Request.new({
+  #                       :client_id => @client_id,
+  #                       :grant_type => 'refresh_token',
+  #                       :refresh_token => @refresh_token
+  #                       })
+  #   # should stub request#access_token
+  #   assert_equal @token_response, JSON.parse(c.access_token)
+  # end

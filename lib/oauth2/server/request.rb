@@ -10,7 +10,7 @@ module OAuth2
       GRANT_TYPES = [ :authorization_code, :password, :client_credentials, :refresh_token ]
 
       attr_reader :response_type, :grant_type, :client_id, :client_secret, :state, :scope, 
-                  :errors, :username, :password, :code, :refresh_token, :redirect_uri
+                  :@errors, :username, :password, :code, :refresh_token, :redirect_uri
       
       attr_accessor :validated
 
@@ -30,7 +30,7 @@ module OAuth2
         @username      = opts[:username]
         @password      = opts[:password]
         @refresh_token = opts[:refresh_token]
-        @errors        = {}
+        @@errors        = {}
         @validated     = nil
       end
 
@@ -53,11 +53,19 @@ module OAuth2
       end
 
       def response_type_code?
-        response_type.to_sym == :code
+        @response_type.to_sym == :code
       end
 
       def response_type_token?
-        response_type.to_sym == :token
+        @response_type.to_sym == :token
+      end
+
+      def grant_type?(value)
+        return @grant_type == value.to_s
+      end
+
+      def response_type?(value)
+        return @response_type == value.to_s
       end
 
       def valid?
@@ -68,13 +76,13 @@ module OAuth2
         # check if we already ran validation
         return @validated unless @validated.nil?
 
-        validated = false
+        @validated = false
 
         # REQUIRED: Check that client_id is valid
         validate_client_id
 
         # REQUIRED: Either response_type or grant_type  
-        if response_type.nil? && grant_type.nil?
+        if @response_type.nil? && @grant_type.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameters: response_type or grant_type"
         end
 
@@ -82,29 +90,29 @@ module OAuth2
         validate_response_type unless @response_type.nil?
 
         # validate grant_type if given
-        validate_grant_type unless grant_type.nil?
+        validate_grant_type unless @grant_type.nil?
 
         # validate redirect uri if grant_type is authorization_code or response_type is token
-        if response_type.to_sym == :token || response_type.to_sym == :code
+        if @response_type.to_sym == :token || @response_type.to_sym == :code
           validate_redirect_uri
         end
 
-        if grant_type.to_sym == :client_credentials
+        if @grant_type.to_sym == :client_credentials
         # validate code if grant_type is client_credentials
           validate_client_credentials
-        elsif grant_type.to_sym == :authorization_code
+        elsif @grant_type.to_sym == :authorization_code
         # validate code if grant_type is authorization_code
           validate_authorization_code
-        elsif grant_type.to_sym == :password
+        elsif @grant_type.to_sym == :password
         # validate user credentials if grant_type is password
           validate_user_credentials
-        elsif grant_type.to_sym == :refresh_token
+        elsif @grant_type.to_sym == :refresh_token
         # validate user credentials if grant_type is password
           validate_refresh_token
         end
         
         # cache validation result
-        validated = true
+        @validated = true
       end
 
     private
@@ -115,43 +123,43 @@ module OAuth2
       end
 
       def validate_client_id
-        return true unless client_id.nil?
+        return true unless @client_id.nil?
         raise OAuth2Error::InvalidRequest, "Missing parameters: client_id"
       end
 
       def validate_client_credentials
-        unless client_id && client_secret
-          errors[:client] = []
-          errors[:client] << "client_id" if client_id.nil?
-          errors[:client] << "client_secret" if client_secret.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: #{errors[:client].join(", ")}"
+        unless @client_id && @client_secret
+          @errors[:client] = []
+          @errors[:client] << "client_id" if @client_id.nil?
+          @errors[:client] << "client_secret" if @client_secret.nil?
+          raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:client].join(", ")}"
         end
         true
       end
 
       def validate_user_credentials
-        if username.nil? || password.nil?
-          errors[:user_credentials] = []
-          errors[:user_credentials] << "username" if username.nil?
-          errors[:user_credentials] << "password" if password.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: #{errors[:user_credentials].join(", ")}"
+        if @username.nil? || @password.nil?
+          @errors[:user_credentials] = []
+          @errors[:user_credentials] << "username" if @username.nil?
+          @errors[:user_credentials] << "password" if @password.nil?
+          raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:user_credentials].join(", ")}"
         end
         true
       end
 
       def validate_response_type
-        if response_type.nil?
+        if @response_type.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameter: response_type"
         end
-        return true if RESPONSE_TYPES.include? response_type.to_sym
+        return true if RESPONSE_TYPES.include? @response_type.to_sym
         raise OAuth2Error::UnsupportedResponseType
       end
 
       def validate_grant_type
-        if grant_type.nil?
+        if @grant_type.nil?
           raise OAuth2Error::InvalidRequest, "Missing parameter: grant_type"
         end
-        return true if GRANT_TYPES.include? grant_type.to_sym
+        return true if GRANT_TYPES.include? @grant_type.to_sym
         raise OAuth2Error::UnsupportedGrantType
       end
 
@@ -162,30 +170,30 @@ module OAuth2
 
       def validate_scope
         verify_request_scope
-        errors[:scope] = "InvalidScope"
+        @errors[:scope] = "InvalidScope"
         raise OAuth2Error::InvalidScope, "FIX ME!!!!!!"
       end
 
       def validate_redirect_uri
-        return true if redirect_uri.nil?
+        return true if @redirect_uri.nil?
         
-        errors[:redirect_uri] = []
+        @errors[:redirect_uri] = []
 
-        uri = Addressable::URI.parse(redirect_uri)
+        uri = Addressable::URI.parse(@redirect_uri)
         unless uri.scheme == "https" 
-            errors[:redirect_uri] << "URI scheme is unsupported"
+            @errors[:redirect_uri] << "URI scheme is unsupported"
         end
         unless uri.fragment.nil?
-            errors[:redirect_uri] << "URI should not include URI fragment"
+            @errors[:redirect_uri] << "URI should not include URI fragment"
         end
         unless uri.query.nil?
-            errors[:redirect_uri] << "URI should not include query string"
+            @errors[:redirect_uri] << "URI should not include query string"
         end
-        if errors[:redirect_uri].any?
-          raise OAuth2Error::InvalidRequest, errors[:redirect_uri].join(", ")
+        if @errors[:redirect_uri].any?
+          raise OAuth2Error::InvalidRequest, @errors[:redirect_uri].join(", ")
         end
 
-        redirect_uri 
+        @redirect_uri 
       end
     end
   end
