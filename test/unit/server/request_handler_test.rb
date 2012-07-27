@@ -1,16 +1,72 @@
+require 'test/unit'
+require 'mocha'
+require 'oauth2'
 
-  # def test_should_throw_exception_when_response_type_code_and_redirect_uri_does_not_match
-  #   request = OAuth2::Server::AbstractRequest.new({
-  #                       :client_id => @client_id,
-  #                       :grant_type => 'code',
-  #                       :redirect_uri => 'https://client.example2.com/oauth_v2/cb',
-  #                       :state => 'xyz'
-  #                       })
-  #   request.expects(:verify_client_id).returns(@dummy_client_app)
-  #   assert_raises OAuth2::OAuth2Error::InvalidRequest do
-  #     request.validate_redirect_uri
-  #   end
-  # end
+class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
+  
+  module DummyClasses
+    class UserDatastore; end
+
+    class ClientDatastore; end  
+
+    class CodeDatastore; end
+
+    class TokenDatastore; end
+  end
+  include DummyClasses
+
+  def setup
+    @code = 'G3Y6jU3a'
+    @client_id = 's6BhdRkqt3'
+    @client_secret = 'SplxlOBeZQQYbYS6WxSbIA'
+    @access_token = '2YotnFZFEjr1zCsicMWpAA'
+    @refresh_token = 'tGzv3JOkF0XG5Qx2TlKWIA'
+    @expires_in = 3600
+    @token_type = 'bearer'
+    @redirect_uri = create_redirect_uri
+    @token_response = {
+      :access_token => @access_token,
+      :refresh_token => @refresh_token,
+      :token_type => @token_type,
+      :expires_in =>  @expires_in,
+    }
+
+    @config = {
+      :user_datastore => UserDatastore,
+      :client_datastore => ClientDatastore,
+      :code_datastore => CodeDatastore,
+      :token_datastore => TokenDatastore
+    } 
+  end
+  # Authorization Code Flow
+
+  # Authorization redirect URI
+  def test_should_raise_invalid_client_with_response_type_code_and_invalid_client_id
+    request = OAuth2::Server::Request.new({
+                        :client_id => @client_id,
+                        :response_type => 'code',
+                        :redirect_uri => 'https://client.example2.com/oauth_v2/cb',
+                        :state => 'xyz'
+                        })
+    @config[:client_datastore].stubs(:find_client_with_id).returns(nil)
+    request_handler = OAuth2::Server::RequestHandler.new(request, @config)
+    assert_raises OAuth2::OAuth2Error::InvalidClient do
+      request_handler.fetch_authorization_code
+    end
+  end
+
+  def test_should_return_authorization_code_with_response_type_code_and_valid_client_id
+    request = OAuth2::Server::Request.new({
+                        :client_id => @client_id,
+                        :response_type => 'code',
+                        :redirect_uri => 'https://client.example2.com/oauth_v2/cb',
+                        :state => 'xyz'
+                        })
+    @config[:client_datastore].stubs(:find_client_with_id).returns(Object.new)
+    @config[:code_datastore].stubs(:generate_authorization_code).returns(@code)
+    request_handler = OAuth2::Server::RequestHandler.new(request, @config)
+    assert_equal @code, request_handler.fetch_authorization_code
+  end
 
   # def test_should_raise_invalid_request_error_with_invalid_client_id
   #   OAuth2::Server::AbstractRequest.any_instance.stubs(:verify_client_id).returns(nil)
@@ -87,3 +143,4 @@
   #   # should stub request#access_token
   #   assert_equal @token_response, JSON.parse(c.access_token)
   # end
+end

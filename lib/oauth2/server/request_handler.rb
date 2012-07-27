@@ -4,13 +4,12 @@ module OAuth2
 
       attr_reader :request, :client
       
-      def intialize(request)
-        # OAuth2::Server::Request.new(request)
+      def initialize(request, config=nil)
         @request = request
-        # @user_datastore = CONFIG
-        # @client_datastore = CONFIG
-        # @token_datastore = CONFIG
-        # @auth_code_datastore = CONFIG
+        @user_datastore = config[:user_datastore]
+        @client_datastore = config[:client_datastore]
+        @token_datastore = config[:token_datastore]
+        @code_datastore = config[:code_datastore]
       end
 
       def client_application
@@ -19,13 +18,17 @@ module OAuth2
 
       def fetch_authorization_code
         @request.validate
+        
         unless @request.response_type_code?
           raise OAuth2Error::UnsupportedResponseType, "The response type, #{@response_type}, is not valid for this request"
         end
-        generate_authorization_code @request.client_id, @request.redirect_uri
+        
+        verify_client_id
+        
+        generate_authorization_code
       end
 
-      def create_access_token_for_user(user, refreshable=false, expires_in=3600, token_type='bearer')
+      def fetch_access_token(user, refreshable=false, expires_in=3600, token_type='bearer')
         # {
         #   :access_token => "2YotnFZFEjr1zCsicMWpAA", 
         #   :token_type => "bearer",
@@ -33,6 +36,8 @@ module OAuth2
         #   :refresh_token => "tGzv3JOkF0XG5Qx2TlKWIA",
         # }
         @request.validate
+        
+        verify_client_id
         
         code = verify_authorization_code
 
@@ -42,6 +47,7 @@ module OAuth2
         
         if @request.grant_type == :authorization_code && !verify_authorization_code
           raise OAuth2Error::UnauthorizedClient
+        end
 
         if @request.grant_type == :password && !verify_user_credentials
           raise OAuth2Error::AccessDenied
@@ -93,7 +99,7 @@ module OAuth2
         #   :state => "auth",
         # }
         response = { 
-          :code => fetch_authorization_code
+          :code => generate_authorization_code
         }
         response[:state] = @request.state unless @request.state.nil?
         response 
@@ -105,20 +111,20 @@ module OAuth2
         raise OAuth2::OAuth2Error::InvalidClient, "Unknown client"
       end
 
-      def verify_client_credentials
-        authenticated = @user_datastore.authenticate client_secret
+      def verify_user_credentials
+        authenticated = @user_datastore.authenticate request.username, request.password
         return true if authenticated
         raise OAuth2::OAuth2Error::InvalidClient, "Client authentication failed"
       end
 
-      def verify_user_credentials
+      def verify_client_credentials
         client = verify_client_id
         return true if client.verify_secret @request.client_secret
         raise OAuth2::OAuth2Error::InvalidClient, "Client authentication failed"
       end
 
       def verify_authorization_code
-        code = @auth_code_datastore.verify_authorization_code @request.client_id, @request.code, @request.redirect_uri
+        code = @code_datastore.verify_authorization_code @request.client_id, @request.code, @request.redirect_uri
         if code.expired? || inactive?
           raise OAuth2::OAuth2Error::Error, "authorization code expired"
         end
@@ -130,7 +136,7 @@ module OAuth2
       end
 
       def generate_authorization_code
-        @auth_code_datastore.generate_authorization_code @request.client_id, @request.redirect_uri
+        @code_datastore.generate_authorization_code @request.client_id, @request.redirect_uri
       end
     end
   end

@@ -10,7 +10,7 @@ module OAuth2
       GRANT_TYPES = [ :authorization_code, :password, :client_credentials, :refresh_token ]
 
       attr_reader :response_type, :grant_type, :client_id, :client_secret, :state, :scope, 
-                  :@errors, :username, :password, :code, :refresh_token, :redirect_uri
+                  :errors, :username, :password, :code, :refresh_token, :redirect_uri
       
       attr_accessor :validated
 
@@ -30,7 +30,7 @@ module OAuth2
         @username      = opts[:username]
         @password      = opts[:password]
         @refresh_token = opts[:refresh_token]
-        @@errors        = {}
+        @errors        = {}
         @validated     = nil
       end
 
@@ -97,25 +97,27 @@ module OAuth2
           validate_redirect_uri
         end
 
-        if @grant_type.to_sym == :client_credentials
-        # validate code if grant_type is client_credentials
-          validate_client_credentials
-        elsif @grant_type.to_sym == :authorization_code
-        # validate code if grant_type is authorization_code
-          validate_authorization_code
-        elsif @grant_type.to_sym == :password
-        # validate user credentials if grant_type is password
-          validate_user_credentials
-        elsif @grant_type.to_sym == :refresh_token
-        # validate user credentials if grant_type is password
-          validate_refresh_token
+        unless @grant_type.nil?
+          if @grant_type.to_sym == :client_credentials
+          # validate code if grant_type is client_credentials
+            validate_client_credentials
+          elsif @grant_type.to_sym == :authorization_code
+          # validate code if grant_type is authorization_code
+            validate_authorization_code
+          elsif @grant_type.to_sym == :password
+          # validate user credentials if grant_type is password
+            validate_user_credentials
+          elsif @grant_type.to_sym == :refresh_token
+          # validate user credentials if grant_type is password
+            validate_refresh_token
+          end
         end
         
         # cache validation result
         @validated = true
       end
 
-    private
+    # private
     
       def validate_authorization_code
         return true unless code.nil?
