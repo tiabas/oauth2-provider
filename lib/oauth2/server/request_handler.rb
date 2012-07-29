@@ -19,7 +19,7 @@ module OAuth2
       def fetch_authorization_code
         @request.validate
         
-        unless @request.response_type_code?
+        unless @request.response_type?(:code)
           raise OAuth2Error::UnsupportedResponseType, "The response type, #{@response_type}, is not valid for this request"
         end
         
@@ -28,7 +28,7 @@ module OAuth2
         generate_authorization_code
       end
 
-      def fetch_access_token(user, refreshable=false, expires_in=3600, token_type='bearer')
+      def fetch_access_token(user=nil, refreshable=true, expires_in=3600, token_type='bearer')
         # {
         #   :access_token => "2YotnFZFEjr1zCsicMWpAA", 
         #   :token_type => "bearer",
@@ -39,37 +39,46 @@ module OAuth2
         
         verify_client_id
         
-        code = verify_authorization_code
-
-        unless (@request.grant_type || @request.response_type_token?)
-          raise OAuth2Error::UnsupportedResponseType, "The response type provided is not valid for this request"
+        if user.nil? && !@request.grant_type?(:refresh_token)
+          raise "User must be provided"
         end
+
+        unless (@request.grant_type || @request.response_type?(:token))
+          raise OAuth2Error::UnsupportedResponseType, "invalid response type or grant type"
+        end
+
+        if @request.response_type? :token
+          refresh_token = false
+        end
+
+        if @request.grant_type?(:authorization_code) 
+          code = verify_authorization_code
+        end
+
+        if @request.grant_type?(:password)
+          verify_user_credentials
+        end
+
+        if @request.grant_type?(:client_credentials)
+          verify_client_credentials
+        end
+
+        if @request.grant_type?(:refresh_token) 
+          token = @token_datastore.from_refresh_token(@request.refresh_token)
+          unless token
+            raise OAuth2::OAuth2Error::InvalidRequest, "invalid refresh token"
+          end
+          return token
+        end  
+
+        # run some user code
+        yield if block_given?
+
+        token = @token_datastore.generate_user_token(user, @client, refresh_token, refreshable) 
         
-        if @request.grant_type == :authorization_code && !verify_authorization_code
-          raise OAuth2Error::UnauthorizedClient
-        end
-
-        if @request.grant_type == :password && !verify_user_credentials
-          raise OAuth2Error::AccessDenied
-        end
-
-        if @request.grant_type == :client_credentials && !verify_client_credentials
-          raise OAuth2Error::UnauthorizedClient
-        end
-
-        if @request.grant_type == :refresh_token && !verify_refresh_token
-          raise OAuth2Error::UnauthorizedClient
-        end      
-
-        # yield if we wish to perform anymore security checks
-        yield 
-
-        refresh_token = @request.grant_type?(:client_credentials) ? false : refresh_token 
-
-        token = access_token_datastore.create_token(user, @client_app, refreshable) 
+        # deactivate used authorization code 
+        code.deactivate! unless code.nil?
         
-        code.deactivate!
-
         token
       end
 
@@ -78,19 +87,23 @@ module OAuth2
         build_response_uri @request.redirect_uri, authorization_response
       end
 
-      def access_token_redirect_uri
+      def access_token_redirect_uri(user, expires_in=3600, token_type='bearer')
         # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
-        build_response_uri @request.redirect_uri, nil, fetch_access_token.to_hsh
+        build_response_uri @request.redirect_uri, fetch_access_token(user, expires_in, token_type).to_hsh
       end
 
     private
       
       # convenience method to build response URI  
-      def build_response_uri(redirect_uri, query_params=nil, fragment_params=nil)
+      def build_response_uri(redirect_uri, opts={})
+        query= opts[:query] || {},
+        fragment= opts[:fragment] || {}
+        raise "Hash expected but got: #{query} and #{fragment}" unless (query.is_a?(Hash) && fragment.is_a?(Hash)
+
         uri = Addressable::URI.parse redirect_uri
-        uri.query_values = Addressable::URI.form_encode query_params unless query_params.nil?
-        uri.fragment = Addressable::URI.form_encode fragment_params unless fragment_params.nil?
-        return uri
+        uri.query_values = uri.query_values.merge(query) unless query_params.nil?
+        uri.fragment = uri.fragment.merge(fragment) unless fragment_params.nil?
+        uri.to_s
       end
 
       def authorization_response
@@ -99,7 +112,7 @@ module OAuth2
         #   :state => "auth",
         # }
         response = { 
-          :code => generate_authorization_code
+          :code => fetch_authorization_code
         }
         response[:state] = @request.state unless @request.state.nil?
         response 
@@ -108,25 +121,25 @@ module OAuth2
       def verify_client_id
         @client = @client_datastore.find_client_with_id(@request.client_id)
         return @client unless @client.nil?
-        raise OAuth2::OAuth2Error::InvalidClient, "Unknown client"
+        raise OAuth2::OAuth2Error::InvalidClient, "unknown client"
       end
 
       def verify_user_credentials
         authenticated = @user_datastore.authenticate request.username, request.password
         return true if authenticated
-        raise OAuth2::OAuth2Error::InvalidClient, "Client authentication failed"
+        raise OAuth2::OAuth2Error::AccessDenied, "user authentication failed"
       end
 
       def verify_client_credentials
         client = verify_client_id
         return true if client.verify_secret @request.client_secret
-        raise OAuth2::OAuth2Error::InvalidClient, "Client authentication failed"
+        raise OAuth2::OAuth2Error::InvalidClient, "client authentication failed"
       end
 
       def verify_authorization_code
         code = @code_datastore.verify_authorization_code @request.client_id, @request.code, @request.redirect_uri
-        if code.expired? || inactive?
-          raise OAuth2::OAuth2Error::Error, "authorization code expired"
+        if code.nil? || code.expired? || code.deactivated? 
+          raise OAuth2::OAuth2Error::Error, "invalid authorization code"
         end
         code
       end

@@ -52,20 +52,12 @@ module OAuth2
         false
       end
 
-      def response_type_code?
-        @response_type.to_sym == :code
-      end
-
-      def response_type_token?
-        @response_type.to_sym == :token
-      end
-
       def grant_type?(value)
-        return @grant_type == value.to_s
+        return @grant_type && (@grant_type == value.to_s)
       end
 
       def response_type?(value)
-        return @response_type == value.to_s
+        return @response_type && (@response_type == value.to_s)
       end
 
       def valid?
@@ -83,21 +75,21 @@ module OAuth2
 
         # REQUIRED: Either response_type or grant_type  
         if @response_type.nil? && @grant_type.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: response_type or grant_type"
+          raise OAuth2Error::InvalidRequest, "request parameters missing:: response_type or grant_type"
         end
 
         # validate response_type if given
-        validate_response_type unless @response_type.nil?
+        unless @response_type.nil?
+          validate_response_type
 
-        # validate grant_type if given
-        validate_grant_type unless @grant_type.nil?
-
-        # validate redirect uri if grant_type is authorization_code or response_type is token
-        if @response_type.to_sym == :token || @response_type.to_sym == :code
-          validate_redirect_uri
+          # validate redirect uri if grant_type is authorization_code or response_type is token
+          validate_redirect_uri if @response_type.to_sym == :token || @response_type.to_sym == :code
         end
 
+        # validate grant_type if given
         unless @grant_type.nil?
+          validate_grant_type
+
           if @grant_type.to_sym == :client_credentials
           # validate code if grant_type is client_credentials
             validate_client_credentials
@@ -121,12 +113,12 @@ module OAuth2
     
       def validate_authorization_code
         return true unless code.nil?
-        raise OAuth2Error::InvalidRequest, "Missing parameters: code"
+        raise OAuth2Error::InvalidRequest, "request parameters missing:: code"
       end
 
       def validate_client_id
         return true unless @client_id.nil?
-        raise OAuth2Error::InvalidRequest, "Missing parameters: client_id"
+        raise OAuth2Error::InvalidRequest, "request parameters missing:: client_id"
       end
 
       def validate_client_credentials
@@ -134,7 +126,7 @@ module OAuth2
           @errors[:client] = []
           @errors[:client] << "client_id" if @client_id.nil?
           @errors[:client] << "client_secret" if @client_secret.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:client].join(", ")}"
+          raise OAuth2Error::InvalidRequest, "request parameters missing:: #{@errors[:client].join(", ")}"
         end
         true
       end
@@ -144,14 +136,14 @@ module OAuth2
           @errors[:user_credentials] = []
           @errors[:user_credentials] << "username" if @username.nil?
           @errors[:user_credentials] << "password" if @password.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameters: #{@errors[:user_credentials].join(", ")}"
+          raise OAuth2Error::InvalidRequest, "missing parameters: #{@errors[:user_credentials].join(", ")}"
         end
         true
       end
 
       def validate_response_type
         if @response_type.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameter: response_type"
+          raise OAuth2Error::InvalidRequest, "missing parameters: response_type"
         end
         return true if RESPONSE_TYPES.include? @response_type.to_sym
         raise OAuth2Error::UnsupportedResponseType
@@ -159,7 +151,7 @@ module OAuth2
 
       def validate_grant_type
         if @grant_type.nil?
-          raise OAuth2Error::InvalidRequest, "Missing parameter: grant_type"
+          raise OAuth2Error::InvalidRequest, "missing parameters: grant_type"
         end
         return true if GRANT_TYPES.include? @grant_type.to_sym
         raise OAuth2Error::UnsupportedGrantType
@@ -167,7 +159,7 @@ module OAuth2
 
       def validate_refresh_token
         return true unless refresh_token.nil?
-        raise OAuth2Error::InvalidRequest, "Missing parameter: refresh_token"
+        raise OAuth2Error::InvalidRequest, "missing parameters: refresh_token"
       end
 
       def validate_scope
