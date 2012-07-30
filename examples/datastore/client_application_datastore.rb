@@ -24,19 +24,19 @@ module OAuth2
       end
 
 
-      private
+    private
 
-        def self.create_client_id
-          OAuth2::Helper.generate_urlsafe_key(24)
-        end
+      def self.create_client_id
+        OAuth2::Helper.generate_urlsafe_key(24)
+      end
 
-        def self.create_client_secret
-          OAuth2::Helper.generate_urlsafe_key(32)
-        end
+      def self.create_client_secret
+        OAuth2::Helper.generate_urlsafe_key(32)
+      end
 
-        def authenticate(secret)
-          self.client_secret == secret
-        end
-        end
+      def authenticate(secret)
+        self.client_secret == secret
+      end
+    end
   end
 end

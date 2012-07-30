@@ -1,4 +1,5 @@
-require 'unit/server/test_abstract_request'
+require 'unit/server/request_test'
+require 'unit/server/request_handler_test'
 
 class MiniTest::Unit::TestCase
   def create_redirect_uri

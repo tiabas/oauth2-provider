@@ -18,7 +18,7 @@ module OAuth2
           old_token.refresh!
         end
 
-        def create_token(cid, uid, expires_in=3600, token_type='bearer')
+        def create_token(cid, uid, refreshable=false, expires_in=3600, token_type='bearer')
           self.instances ||= []
           token = new
           token.merge!({
@@ -27,9 +27,9 @@ module OAuth2
                     :user_id => uid,
                     :token => generate_urlsafe_key,
                     :token_type => token_type,
-                    :refresh_token => generate_urlsafe_key,
+                    :refresh_token => (refreshable ? generate_urlsafe_key : nil) ,
                     :expires_in => expires_in,
-                    :active => true,
+                    :deactivated_at => nil,
                     :updated_at => Time.now,
                     :created_at => Time.now
                   })
@@ -38,8 +38,12 @@ module OAuth2
         end
       end
 
+      def inactive?
+        !!self[:deactivated_at]
+      end
+
       def active?
-        !!self[:active]
+        !inactive?
       end
 
       def expired?
@@ -51,13 +55,21 @@ module OAuth2
       end
 
       def deactivate!
-         self[:active] = false
+         self[:deactivated_at] = Time.now
       end
 
       def refresh!
          self[:token] = generate_urlsafe_key
       end
 
+      def to_hsh
+        {
+          :token => token,
+          :token_type => token_type,
+          :expires_in => expires_in,
+          :refresh_token => refresh_token
+        }
+      end
     end
   end
 end
