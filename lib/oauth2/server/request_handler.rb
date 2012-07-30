@@ -3,7 +3,7 @@ module OAuth2
     class RequestMethods
 
       def authorization_code(request)
-        # 
+        #
         request.validate
         unless request.response_type_code?
           raise OAuth2Error::UnsupportedResponseType, "The response type, #{@response_type}, is not valid for this request"
@@ -13,14 +13,14 @@ module OAuth2
 
       def authorization_response
         # {
-        #   :code => "2YotnFZFEjr1zCsicMWpAA", 
+        #   :code => "2YotnFZFEjr1zCsicMWpAA",
         #   :state => "auth",
         # }
-        response = { 
+        response = {
           :code => authorization_code
         }
         response[:state] = request.state unless request.state.nil?
-        response 
+        response
       end
 
       def authorization_redirect_uri(allow=false) 
