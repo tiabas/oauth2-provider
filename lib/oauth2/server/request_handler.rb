@@ -82,30 +82,6 @@ module OAuth2
         token
       end
 
-      def authorization_redirect_uri(allow=false) 
-        # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
-        build_response_uri @request.redirect_uri, authorization_response
-      end
-
-      def access_token_redirect_uri(user, expires_in=3600, token_type='bearer')
-        # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
-        build_response_uri @request.redirect_uri, fetch_access_token(user, expires_in, token_type).to_hsh
-      end
-
-    private
-      
-      # convenience method to build response URI  
-      def build_response_uri(redirect_uri, opts={})
-        query= opts[:query] || {},
-        fragment= opts[:fragment] || {}
-        raise "Hash expected but got: #{query} and #{fragment}" unless (query.is_a?(Hash) && fragment.is_a?(Hash)
-
-        uri = Addressable::URI.parse redirect_uri
-        uri.query_values = uri.query_values.merge(query) unless query_params.nil?
-        uri.fragment = uri.fragment.merge(fragment) unless fragment_params.nil?
-        uri.to_s
-      end
-
       def authorization_response
         # {
         #   :code => "2YotnFZFEjr1zCsicMWpAA", 
@@ -116,6 +92,32 @@ module OAuth2
         }
         response[:state] = @request.state unless @request.state.nil?
         response 
+      end
+
+      def authorization_redirect_uri(allow=false) 
+        # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
+
+        build_response_uri @request.redirect_uri, :query => authorization_response
+      end
+
+      def access_token_redirect_uri(user, expires_in=3600, token_type='bearer')
+        # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
+        build_response_uri @request.redirect_uri, :fragment => fetch_access_token(user, expires_in, token_type).to_hsh
+      end
+
+    private
+      
+      # convenience method to build response URI  
+      def build_response_uri(redirect_uri, opts={})
+        query= opts[:query]
+        fragment= opts[:fragment]
+        # raise "Hash expected but got: #{query.inspect} and #{fragment.inspect}" unless (query.is_a?(Hash) && fragment.is_a?(Hash))
+        uri = Addressable::URI.parse redirect_uri
+        temp_query = uri.query_values || {}
+        temp_frag = uri.fragment || nil
+        uri.query_values = temp_query.merge(query) unless query.nil?
+        uri.fragment = Addressable::URI.form_encode(fragment) unless fragment.nil?
+        uri.to_s
       end
 
       def verify_client_id
@@ -137,11 +139,11 @@ module OAuth2
       end
 
       def verify_authorization_code
-        code = @code_datastore.verify_authorization_code @request.client_id, @request.code, @request.redirect_uri
-        if code.nil? || code.expired? || code.deactivated? 
-          raise OAuth2::OAuth2Error::Error, "invalid authorization code"
+        auth_code = @code_datastore.verify_authorization_code @request.client_id, @request.code, @request.redirect_uri
+        if auth_code.nil? || auth_code.expired? || auth_code.deactivated?
+          raise OAuth2::OAuth2Error::InvalidGrant, "invalid authorization code"
         end
-        code
+        auth_code
       end
 
       def verify_request_scope

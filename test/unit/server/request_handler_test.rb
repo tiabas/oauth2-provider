@@ -63,6 +63,35 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     assert_equal @code, request_handler.fetch_authorization_code
   end
 
+  def test_should_return_code_and_state_with_response_type_code_and_valid_client_id
+    request = OAuth2::Server::Request.new({
+                        :client_id => @client_id,
+                        :response_type => 'code',
+                        :redirect_uri => @redirect_uri,
+                        :state => @state
+                        })
+    @config[:code_datastore].stubs(:generate_authorization_code).returns(@code)
+
+    request_handler = OAuth2::Server::RequestHandler.new(request, @config)
+    response = { :code=> @code, :state=> @state }
+
+    assert_equal response, request_handler.authorization_response
+  end
+
+  def test_should_return_code_with_response_type_code_and_valid_client_id
+    request = OAuth2::Server::Request.new({
+                        :client_id => @client_id,
+                        :response_type => 'code',
+                        :redirect_uri => @redirect_uri
+                        })
+    @config[:code_datastore].stubs(:generate_authorization_code).returns(@code)
+
+    request_handler = OAuth2::Server::RequestHandler.new(request, @config)
+    response = { :code=> @code }
+
+    assert_equal response, request_handler.authorization_response
+  end
+
   def test_should_return_authorization_redirect_with_response_type_code_and_valid_client_id
     request = OAuth2::Server::Request.new({
                         :client_id => @client_id,
@@ -70,7 +99,6 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :redirect_uri => @redirect_uri,
                         :state => @state
                         })
-    # @config[:client_datastore].stubs(:find_client_with_id).returns(Object.new)
     @config[:code_datastore].stubs(:generate_authorization_code).returns(@code)
 
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
@@ -104,7 +132,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     @config[:code_datastore].stubs(:verify_authorization_code).with(@client_id, @code, @redirect_uri).returns(nil)
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
 
-    assert_raises OAuth2::OAuth2Error::Error do
+    assert_raises OAuth2::OAuth2Error::InvalidGrant do
       request_handler.fetch_access_token @mock_user
     end
   end
