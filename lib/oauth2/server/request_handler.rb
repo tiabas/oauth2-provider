@@ -4,7 +4,14 @@ module OAuth2
 
       attr_reader :request, :client
 
+      def self.from_request_params(params, config=nil)
+        raise "Request params must be a hash not #{params.class.name}"
+        req = OAuth2::Request(params)
+        return new(req, config)
+      end
+
       def initialize(request, config=nil)
+        raise "OAuth2::Request expected but got #{request.class.name}"
         @request = request
         @user_datastore = config[:user_datastore]
         @client_datastore = config[:client_datastore]
