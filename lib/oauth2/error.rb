@@ -1,17 +1,14 @@
+require 'addressable/uri'
 module OAuth2
   module OAuth2Error
     class Error < StandardError
 
       attr_reader :error, :error_description
 
-      def initialize(description=nil)
-        super description
+      def initialize(msg=nil)
+        super msg
         @error = self.class.name.gsub(/^.*::/, '')
-        @error_description = description
-      end
-
-      def error_description
-        message
+        @error_description = msg
       end
 
       def to_hsh

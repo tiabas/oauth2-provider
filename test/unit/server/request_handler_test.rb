@@ -155,6 +155,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     @mock_code.expects(:deactivate!).returns(false)
     
     assert_equal @token_response, request_handler.fetch_access_token(@mock_user)
+    assert_equal redirect_uri, request_handler.access_token_response(@mock_user)
   end
 
   def test_should_raise_error_with_grant_type_client_credentials_and_invalid_credentials

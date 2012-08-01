@@ -101,15 +101,19 @@ module OAuth2
         response
       end
 
-      def authorization_redirect_uri(allow=false) 
+      def authorization_response(allow=false) 
         # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
 
         build_response_uri @request.redirect_uri, :query => authorization_response
       end
 
-      def access_token_redirect_uri(user, expires_in=3600, token_type='bearer')
+      def access_token_response(user, expires_in=3600, token_type='bearer')
         # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
         build_response_uri @request.redirect_uri, :fragment => fetch_access_token(user, expires_in, token_type).to_hsh
+      end
+
+      def error_response(oauth2_error)
+        build_response_uri @request.redirect_uri, :query => oauth2_error.to_hsh
       end
 
     private
