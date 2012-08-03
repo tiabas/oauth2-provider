@@ -1,7 +1,3 @@
-require 'test/unit'
-require 'mocha'
-require 'oauth2'
-
 class TestOAuth2Request < MiniTest::Unit::TestCase
   
   def setup

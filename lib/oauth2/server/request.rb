@@ -64,7 +64,7 @@ module OAuth2
         validate
       end
 
-      def validate
+      def validate!
         # check if we already ran validation
         return @validated unless @validated.nil?
 
@@ -75,7 +75,8 @@ module OAuth2
 
         # REQUIRED: Either response_type or grant_type  
         if @response_type.nil? && @grant_type.nil?
-          raise OAuth2Error::InvalidRequest, "request parameters missing:: response_type or grant_type"
+          param = @response_type.nil? ? 'response_type' : 'grant_type'
+          raise OAuth2Error::InvalidRequest, "#{param} is required"
         end
 
         # validate response_type if given
@@ -83,7 +84,7 @@ module OAuth2
           validate_response_type
 
           # validate redirect uri if grant_type is authorization_code or response_type is token
-          validate_redirect_uri if @response_type.to_sym == :token || @response_type.to_sym == :code
+          validate_redirect_uri if [:token, :code].include? @response_type.to_sym
         end
 
         # validate grant_type if given
@@ -100,13 +101,16 @@ module OAuth2
           # validate user credentials if grant_type is password
             validate_user_credentials
           elsif @grant_type.to_sym == :refresh_token
-          # validate user credentials if grant_type is password
+          # validate user credentials if grant_type is refresh token
             validate_refresh_token
           end
-        end
-        
+        end        
         # cache validation result
         @validated = true
+      end
+
+      def validate
+        validate!
       end
 
     # private
@@ -133,10 +137,10 @@ module OAuth2
 
       def validate_user_credentials
         if @username.nil? || @password.nil?
-          @errors[:user_credentials] = []
+          @errors[:user_credentials] = ["missing parameters:"]
           @errors[:user_credentials] << "username" if @username.nil?
           @errors[:user_credentials] << "password" if @password.nil?
-          raise OAuth2Error::InvalidRequest, "missing parameters: #{@errors[:user_credentials].join(", ")}"
+          raise OAuth2Error::InvalidRequest, @errors[:user_credentials].join(" ")
         end
         true
       end
@@ -163,9 +167,10 @@ module OAuth2
       end
 
       def validate_scope
-        verify_request_scope
-        @errors[:scope] = "InvalidScope"
-        raise OAuth2Error::InvalidScope, "FIX ME!!!!!!"
+        # yield if block_given
+        return unless (@scope || @scope.strip.empty?)
+        @errors[:scope] = "scope cannot be empty"
+        raise OAuth2Error::InvalidRequest, @errors[:scope]
       end
 
       def validate_redirect_uri
@@ -188,6 +193,17 @@ module OAuth2
         end
 
         @redirect_uri 
+      end
+
+      def to_hsh
+        {
+          :client_id     => @client_id,
+          :client_secret => @client_secret,
+          :redirect_uri  => @redirect_uri,
+          :response_type => @response_type,
+          :state         => @state,
+          :scope         => @scope
+        }
       end
     end
   end

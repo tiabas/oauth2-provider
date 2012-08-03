@@ -1,3 +1,6 @@
+require 'test/unit'
+require 'mocha'
+require 'oauth2'
 require 'unit/server/request_test'
 require 'unit/server/request_handler_test'
 

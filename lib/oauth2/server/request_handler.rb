@@ -5,13 +5,17 @@ module OAuth2
       attr_reader :request, :client
 
       def self.from_request_params(params, config=nil)
-        raise "Request params must be a hash not #{params.class.name}"
+        unless params.is_a? Hash
+          raise "Request params must be a hash not #{params.class.name}"
+        end
         req = OAuth2::Request(params)
         return new(req, config)
       end
 
       def initialize(request, config=nil)
-        raise "OAuth2::Request expected but got #{request.class.name}"
+        unless request.is_a? OAuth2::Server::Request
+          raise "OAuth2::Server::Request expected but got #{request.class.name}"
+        end
         @request = request
         @user_datastore = config[:user_datastore]
         @client_datastore = config[:client_datastore]
@@ -27,7 +31,7 @@ module OAuth2
         @request.validate
 
         unless @request.response_type?(:code)
-          raise OAuth2Error::UnsupportedResponseType, "The response type, #{@response_type}, is not valid for this request"
+          raise OAuth2Error::UnsupportedResponseType, "response_type: #{@response_type} is not supported"
         end
 
         verify_client_id
@@ -35,7 +39,7 @@ module OAuth2
         generate_authorization_code
       end
 
-      def fetch_access_token(user=nil, refreshable=true, expires_in=3600, token_type='bearer')
+      def fetch_access_token(user=nil, opts={})
         # {
         #   :access_token => "2YotnFZFEjr1zCsicMWpAA", 
         #   :token_type => "bearer",
@@ -51,10 +55,12 @@ module OAuth2
         end
 
         unless (@request.grant_type || @request.response_type?(:token))
-          raise OAuth2Error::UnsupportedResponseType, "invalid response type or grant type"
+          # grant type validity is checked in the request object. Therefore if this
+          # condition fails, the response_type is to blame
+          raise OAuth2Error::InvalidRequest, "#response_type: {@response_type} is not valid for this request"
         end
 
-        if @request.response_type? :token
+        if @request.response_type?(:token)
           refresh_token = false
         end
 
@@ -80,8 +86,8 @@ module OAuth2
 
         # run some user code
         yield if block_given?
-
-        token = @token_datastore.generate_user_token(user, @client, refresh_token, refreshable) 
+        opts = { :scope => @scope }.merge(opts)
+        token = @token_datastore.generate_user_token(user, @client, opts) 
 
         # deactivate used authorization code 
         code.deactivate! unless code.nil?
@@ -101,15 +107,15 @@ module OAuth2
         response
       end
 
-      def authorization_response(allow=false) 
+      def authorization_redirect_uri(allow=false) 
         # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
 
         build_response_uri @request.redirect_uri, :query => authorization_response
       end
 
-      def access_token_response(user, expires_in=3600, token_type='bearer')
+      def access_token_response(user, opts={})
         # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
-        build_response_uri @request.redirect_uri, :fragment => fetch_access_token(user, expires_in, token_type).to_hsh
+        build_response_uri @request.redirect_uri, :fragment => fetch_access_token(user, opts).to_hsh
       end
 
       def error_response(oauth2_error)
