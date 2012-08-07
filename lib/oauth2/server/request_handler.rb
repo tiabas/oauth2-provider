@@ -57,7 +57,7 @@ module OAuth2
         unless (@request.grant_type || @request.response_type?(:token))
           # grant type validity is checked in the request object. Therefore if this
           # condition fails, the response_type is to blame
-          raise OAuth2Error::InvalidRequest, "#response_type: {@response_type} is not valid for this request"
+          raise OAuth2Error::InvalidRequest, "#response_type: #{@response_type} is not valid for this request"
         end
 
         if @request.response_type?(:token)
@@ -109,16 +109,15 @@ module OAuth2
 
       def authorization_redirect_uri(allow=false) 
         # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
-
         build_response_uri @request.redirect_uri, :query => authorization_response
       end
 
-      def access_token_response(user, opts={})
+      def access_token_redirect_uri(user, opts={})
         # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
         build_response_uri @request.redirect_uri, :fragment => fetch_access_token(user, opts).to_hsh
       end
 
-      def error_response(oauth2_error)
+      def error_redirect_uri(oauth2_error)
         # http://example.com/cb#error=access_denied&error_description=the+user+denied+your+request
         build_response_uri @request.redirect_uri, :query => oauth2_error.to_hsh
       end

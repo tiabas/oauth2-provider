@@ -2,21 +2,29 @@ require 'addressable/uri'
 module OAuth2
   module OAuth2Error
     class Error < StandardError
+      
+      class << self; attr_accessor :code; end
+      
       attr_reader :error, :error_description
 
       def initialize(msg=nil)
+        msg ||= "an error occurred" 
         super msg
-        @error = self.class.name.gsub(/^.*::/, '')
-                 .gsub(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2')
-                 .gsub!(/([a-z\d])([A-Z])/,'\1_\2')
-                 .downcase
+        @error = self.class.name
         @error_description = msg
+      end
+
+      def normalized_error
+        # Taken from rails active support
+        err = self.class.name.gsub(/^.*::/, '')
+        err = err.gsub(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2')
+        err = err.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
+        err.downcase
       end
 
       def to_hsh
         {
-          :code              => @code,
-          :error             => @error,
+          :error             => normalized_error,
           :error_description => @error_description
         }
       end
@@ -35,44 +43,48 @@ module OAuth2
       end
     end
 
-    class AccessDenied            < Error
-
+    class AccessDenied < Error
+      @code = 401
     end
 
-    class InvalidClient           < Error
-
+    class InvalidClient < Error
+      @code = 401
     end
 
-    class InvalidGrant            < Error
-
+    class InvalidGrant < Error
+      @code = 401
     end
 
-    class InvalidRequest          < Error
-
+    class InvalidRequest < Error
+      @code = 400
     end
 
-    class InvalidScope            < Error
-
+    class InvalidScope < Error
+      @code = 400
     end
 
-    class ServerError             < Error
-
+    class ServerError < Error
+      @code = 500
     end
 
-    class UnauthorizedClient      < Error
-
+    class UnauthorizedClient < Error
+      @code = 400
     end
 
-    class UnsupportedGrantType    < Error
-
+    class UnsupportedGrantType < Error
+      @code = 400
     end
 
     class UnsupportedResponseType < Error
-
+      @code = 400
     end
 
-    class TemporarilyUnavailable  < Error
+    class TemporarilyUnavailable < Error
+      @code = 503
+    end
 
+    class RateLimitExceeded < Error
+      @code = 403
     end
   end
 end

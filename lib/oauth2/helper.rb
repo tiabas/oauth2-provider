@@ -30,7 +30,7 @@ module OAuth2
     def generate_urlsafe_key(size=48)
       seed = Time.now.to_i
       size = size - seed.to_s.length
-      Base64.urlsafe_encode64("#{ OpenSSL::Random.random_bytes(size) }#{ seed }").gsub(/\W/, '')
+      Base64.encode64("#{ OpenSSL::Random.random_bytes(size) }#{ seed }").gsub(/\W/, '')
     end
     alias_method :generate_nonce, :generate_urlsafe_key
 

@@ -111,6 +111,8 @@ module OAuth2
 
       def validate
         validate!
+      rescue
+        false
       end
 
     # private
