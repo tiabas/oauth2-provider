@@ -119,6 +119,7 @@ module OAuth2
       end
 
       def error_response(oauth2_error)
+        # http://example.com/cb#error=access_denied&error_description=the+user+denied+your+request
         build_response_uri @request.redirect_uri, :query => oauth2_error.to_hsh
       end
 
@@ -128,7 +129,10 @@ module OAuth2
       def build_response_uri(redirect_uri, opts={})
         query= opts[:query]
         fragment= opts[:fragment]
-        # raise "Hash expected but got: #{query.inspect} and #{fragment.inspect}" unless (query.is_a?(Hash) && fragment.is_a?(Hash))
+        unless ((query && !query.is_a?(Hash)) || (fragment && !fragment.is_a?(Hash)))
+          # TODO: make sure error message is more descriptive i.e query if query, fragment if fragment
+          raise "Hash expected but got: #{query.inspect} and #{fragment.inspect}"
+        end
         uri = Addressable::URI.parse redirect_uri
         temp_query = uri.query_values || {}
         temp_frag = uri.fragment || nil

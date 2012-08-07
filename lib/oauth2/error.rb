@@ -15,6 +15,7 @@ module OAuth2
 
       def to_hsh
         {
+          :code              => @code,
           :error             => @error,
           :error_description => @error_description
         }
@@ -34,15 +35,44 @@ module OAuth2
       end
     end
 
-    class AccessDenied            < Error; end
-    class InvalidClient           < Error; end
-    class InvalidGrant            < Error; end
-    class InvalidRequest          < Error; end
-    class InvalidScope            < Error; end
-    class ServerError             < Error; end
-    class UnauthorizedClient      < Error; end
-    class UnsupportedGrantType    < Error; end
-    class UnsupportedResponseType < Error; end
-    class TemporarilyUnavailable  < Error; end
+    class AccessDenied            < Error
+
+    end
+
+    class InvalidClient           < Error
+
+    end
+
+    class InvalidGrant            < Error
+
+    end
+
+    class InvalidRequest          < Error
+
+    end
+
+    class InvalidScope            < Error
+
+    end
+
+    class ServerError             < Error
+
+    end
+
+    class UnauthorizedClient      < Error
+
+    end
+
+    class UnsupportedGrantType    < Error
+
+    end
+
+    class UnsupportedResponseType < Error
+
+    end
+
+    class TemporarilyUnavailable  < Error
+
+    end
   end
 end
