@@ -39,7 +39,19 @@ module OAuth2
         generate_authorization_code
       end
 
-      def fetch_access_token(user=nil, opts={})
+      def authorization_code_response
+        # {
+        #   :code => "2YotnFZFEjr1zCsicMWpAA",
+        #   :state => "auth",
+        # }
+        response = {
+          :code => fetch_authorization_code
+        }
+        response[:state] = @request.state unless @request.state.nil?
+        response
+      end
+
+      def access_token_response(user=nil, opts={})
         # {
         #   :access_token => "2YotnFZFEjr1zCsicMWpAA", 
         #   :token_type => "bearer",
@@ -95,31 +107,22 @@ module OAuth2
         token
       end
 
-      def authorization_response
-        # {
-        #   :code => "2YotnFZFEjr1zCsicMWpAA",
-        #   :state => "auth",
-        # }
-        response = {
-          :code => fetch_authorization_code
-        }
-        response[:state] = @request.state unless @request.state.nil?
-        response
-      end
-
       def authorization_redirect_uri(allow=false) 
         # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
 
         build_response_uri @request.redirect_uri, :query => authorization_response
       end
 
-      def access_token_response(user, opts={})
+      def access_token_redirect_uri(user, opts={})
         # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
         build_response_uri @request.redirect_uri, :fragment => fetch_access_token(user, opts).to_hsh
       end
 
-      def error_response(oauth2_error)
-        build_response_uri @request.redirect_uri, :query => oauth2_error.to_hsh
+      def error_redirect_uri(error)
+        unless error.respond_to? :to_hsh
+          raise "Invalid error type. Expected OAuth2::OAuth2Error but got #{error.class.name} "
+        end
+        build_response_uri @request.redirect_uri, :query => error.to_hsh
       end
 
     private
