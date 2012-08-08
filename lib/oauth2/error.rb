@@ -33,7 +33,7 @@ module OAuth2
         Addressable::URI.form_encode to_hsh
       end
 
-      def http_error_response(request)
+      def redirect_uri(request)
         unless request.is_a? OAuth2::Server::Request
           raise "OAuth2::Server::Request expected but got #{request.class.name}"
         end
@@ -81,10 +81,6 @@ module OAuth2
 
     class TemporarilyUnavailable < Error
       @code = 503
-    end
-
-    class RateLimitExceeded < Error
-      @code = 403
     end
   end
 end
