@@ -69,7 +69,7 @@ module OAuth2
         unless (@request.grant_type || @request.response_type?(:token))
           # grant type validity is checked in the request object. Therefore if this
           # condition fails, the response_type is to blame
-          raise OAuth2Error::InvalidRequest, "#response_type: {@response_type} is not valid for this request"
+          raise OAuth2Error::InvalidRequest, "#response_type: #{@response_type} is not valid for this request"
         end
 
         if @request.response_type?(:token)
@@ -109,7 +109,6 @@ module OAuth2
 
       def authorization_redirect_uri(allow=false) 
         # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
-
         build_response_uri @request.redirect_uri, :query => authorization_response
       end
 
@@ -119,6 +118,7 @@ module OAuth2
       end
 
       def error_redirect_uri(error)
+        # http://example.com/cb#error=access_denied&error_description=the+user+denied+your+request
         unless error.respond_to? :to_hsh
           raise "Invalid error type. Expected OAuth2::OAuth2Error but got #{error.class.name} "
         end
@@ -131,7 +131,10 @@ module OAuth2
       def build_response_uri(redirect_uri, opts={})
         query= opts[:query]
         fragment= opts[:fragment]
-        # raise "Hash expected but got: #{query.inspect} and #{fragment.inspect}" unless (query.is_a?(Hash) && fragment.is_a?(Hash))
+        unless ((query && !query.is_a?(Hash)) || (fragment && !fragment.is_a?(Hash)))
+          # TODO: make sure error message is more descriptive i.e query if query, fragment if fragment
+          raise "Hash expected but got: #{query.inspect} and #{fragment.inspect}"
+        end
         uri = Addressable::URI.parse redirect_uri
         temp_query = uri.query_values || {}
         temp_frag = uri.fragment || nil

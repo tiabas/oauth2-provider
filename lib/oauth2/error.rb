@@ -2,20 +2,29 @@ require 'addressable/uri'
 module OAuth2
   module OAuth2Error
     class Error < StandardError
+      
+      class << self; attr_accessor :code; end
+      
       attr_reader :error, :error_description
 
       def initialize(msg=nil)
+        msg ||= "an error occurred" 
         super msg
-        @error = self.class.name.gsub(/^.*::/, '')
-                 .gsub(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2')
-                 .gsub!(/([a-z\d])([A-Z])/,'\1_\2')
-                 .downcase
+        @error = self.class.name
         @error_description = msg
+      end
+
+      def normalized_error
+        # Taken from rails active support
+        err = self.class.name.gsub(/^.*::/, '')
+        err = err.gsub(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2')
+        err = err.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
+        err.downcase
       end
 
       def to_hsh
         {
-          :error             => @error,
+          :error             => normalized_error,
           :error_description => @error_description
         }
       end
@@ -34,15 +43,48 @@ module OAuth2
       end
     end
 
-    class AccessDenied            < Error; end
-    class InvalidClient           < Error; end
-    class InvalidGrant            < Error; end
-    class InvalidRequest          < Error; end
-    class InvalidScope            < Error; end
-    class ServerError             < Error; end
-    class UnauthorizedClient      < Error; end
-    class UnsupportedGrantType    < Error; end
-    class UnsupportedResponseType < Error; end
-    class TemporarilyUnavailable  < Error; end
+    class AccessDenied < Error
+      @code = 401
+    end
+
+    class InvalidClient < Error
+      @code = 401
+    end
+
+    class InvalidGrant < Error
+      @code = 401
+    end
+
+    class InvalidRequest < Error
+      @code = 400
+    end
+
+    class InvalidScope < Error
+      @code = 400
+    end
+
+    class ServerError < Error
+      @code = 500
+    end
+
+    class UnauthorizedClient < Error
+      @code = 400
+    end
+
+    class UnsupportedGrantType < Error
+      @code = 400
+    end
+
+    class UnsupportedResponseType < Error
+      @code = 400
+    end
+
+    class TemporarilyUnavailable < Error
+      @code = 503
+    end
+
+    class RateLimitExceeded < Error
+      @code = 403
+    end
   end
 end
