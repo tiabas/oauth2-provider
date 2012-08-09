@@ -71,7 +71,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     response = { :code=> @code, :state=> @state }
 
-    assert_equal response, request_handler.authorization_response
+    assert_equal response, request_handler.authorization_code_response
   end
 
   def test_should_return_code_with_response_type_code_and_valid_client_id
@@ -85,7 +85,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     response = { :code=> @code }
 
-    assert_equal response, request_handler.authorization_response
+    assert_equal response, request_handler.authorization_code_response
   end
 
   def test_should_return_authorization_redirect_with_response_type_code_and_valid_client_id
@@ -113,7 +113,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     
     assert_raises OAuth2::OAuth2Error::InvalidRequest do
-      request_handler.fetch_access_token @mock_user
+      request_handler.access_token_response @mock_user
     end
   end
 
@@ -129,7 +129,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
 
     assert_raises OAuth2::OAuth2Error::InvalidGrant do
-      request_handler.fetch_access_token @mock_user
+      request_handler.access_token_response @mock_user
     end
   end
 
@@ -147,10 +147,10 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     @config[:code_datastore].expects(:verify_authorization_code).with(@client_id, @code, @redirect_uri).returns(@mock_code)
     @mock_code.expects(:expired?).returns(false)
     @mock_code.expects(:deactivated?).returns(false)
-    @config[:token_datastore].expects(:generate_user_token).with(@mock_user, @mock_client, {}).returns(@token_response)
+    @config[:token_datastore].expects(:generate_user_token).with(@mock_user, {}).returns(@token_response)
     @mock_code.expects(:deactivate!).returns(false)
     
-    assert_equal @token_response, request_handler.fetch_access_token(@mock_user)
+    assert_equal @token_response, request_handler.access_token_response(@mock_user)
   end
 
   def test_should_raise_error_with_grant_type_client_credentials_and_invalid_credentials
@@ -163,7 +163,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @mock_client.expects(:verify_secret).with(@client_secret).returns(false)
     assert_raises OAuth2::OAuth2Error::InvalidClient do
-      request_handler.fetch_access_token(@mock_user)
+      request_handler.access_token_response(@mock_user)
     end
   end
 
@@ -176,8 +176,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @mock_client.expects(:verify_secret).with(@client_secret).returns(true)
-    @config[:token_datastore].expects(:generate_user_token).with(@mock_user, @mock_client, {}).returns(@token_response)
-    assert_equal @token_response, request_handler.fetch_access_token(@mock_user)
+    @config[:token_datastore].expects(:generate_user_token).with(@mock_user, {}).returns(@token_response)
+    assert_equal @token_response, request_handler.access_token_response(@mock_user)
   end
 
   def test_should_raise_error_with_grant_type_password_and_invalid_credentials
@@ -191,7 +191,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @config[:user_datastore].expects(:authenticate).with('jacksparrow', 'Q3zXj3w').returns(false)
     assert_raises OAuth2::OAuth2Error::AccessDenied do
-      request_handler.fetch_access_token(@mock_user)
+      request_handler.access_token_response(@mock_user)
     end
   end
 
@@ -205,8 +205,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @config[:user_datastore].expects(:authenticate).with('blackbeard', '$3Rdj@w').returns(true)
-    @config[:token_datastore].expects(:generate_user_token).with(@mock_user, @mock_client, {}).returns(@token_response)
-    assert_equal @token_response, request_handler.fetch_access_token(@mock_user)
+    @config[:token_datastore].expects(:generate_user_token).with(@mock_user, {}).returns(@token_response)
+    assert_equal @token_response, request_handler.access_token_response(@mock_user)
   end
 
   def test_should_return_throw_error_with_grant_type_refresh_token_and_invalid_refresh_token
@@ -218,7 +218,7 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @config[:token_datastore].expects(:from_refresh_token).with('bogus').returns(nil)
     assert_raises OAuth2::OAuth2Error::InvalidRequest do
-      request_handler.fetch_access_token
+      request_handler.access_token_response
     end
   end
 
@@ -230,6 +230,6 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @config[:token_datastore].expects(:from_refresh_token).with(@refresh_token).returns(@token_response)
-    assert_equal @token_response, request_handler.fetch_access_token
+    assert_equal @token_response, request_handler.access_token_response
   end
 end

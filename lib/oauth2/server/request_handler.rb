@@ -36,7 +36,7 @@ module OAuth2
 
         verify_client_id
 
-        generate_authorization_code
+        @code_datastore.generate_authorization_code @request.client_id, @request.redirect_uri
       end
 
       def authorization_code_response
@@ -98,10 +98,10 @@ module OAuth2
 
         # run some user code
         yield if block_given?
-        opts = { :scope => @scope }.merge(opts)
-        token = @token_datastore.generate_user_token(user, @client, opts) 
 
-        # deactivate used authorization code 
+        token = @token_datastore.generate_user_token(user, opts) 
+
+        # deactivate authorization code 
         code.deactivate! unless code.nil?
 
         token
@@ -109,7 +109,7 @@ module OAuth2
 
       def authorization_redirect_uri(allow=false) 
         # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
-        build_response_uri @request.redirect_uri, :query => authorization_response
+        build_response_uri @request.redirect_uri, :query => authorization_code_response
       end
 
       def access_token_redirect_uri(user, opts={})
@@ -131,9 +131,9 @@ module OAuth2
       def build_response_uri(redirect_uri, opts={})
         query= opts[:query]
         fragment= opts[:fragment]
-        unless ((query && !query.is_a?(Hash)) || (fragment && !fragment.is_a?(Hash)))
+        unless ((query && query.is_a?(Hash)) || (fragment && fragment.is_a?(Hash)))
           # TODO: make sure error message is more descriptive i.e query if query, fragment if fragment
-          raise "Hash expected but got: #{query.inspect} and #{fragment.inspect}"
+          raise "Hash expected but got: query: #{query.inspect}, fragment: #{fragment.inspect}"
         end
         uri = Addressable::URI.parse redirect_uri
         temp_query = uri.query_values || {}
@@ -171,10 +171,6 @@ module OAuth2
 
       def verify_request_scope
         raise NotImplementedError
-      end
-
-      def generate_authorization_code
-        @code_datastore.generate_authorization_code @request.client_id, @request.redirect_uri
       end
     end
   end
