@@ -23,12 +23,17 @@ module OAuth2
         @code_datastore = config[:code_datastore]
       end
 
+      def validate_client_id
+        @request.validate!
+        verify_client_id
+      end
+
       def client_application
         @client || verify_client_id
       end
 
       def fetch_authorization_code
-        @request.validate
+        @request.validate!
 
         unless @request.response_type?(:code)
           raise OAuth2Error::UnsupportedResponseType, "response_type: #{@response_type} is not supported"
@@ -58,7 +63,7 @@ module OAuth2
         #   :expires_in => 3600,
         #   :refresh_token => "tGzv3JOkF0XG5Qx2TlKWIA",
         # }
-        @request.validate
+        @request.validate!
 
         verify_client_id
 
@@ -99,6 +104,7 @@ module OAuth2
         # run some user code
         yield if block_given?
 
+        #token = @token_datastore.generate_user_token(user, @request.scope, opts) 
         token = @token_datastore.generate_user_token(user, opts) 
 
         # deactivate authorization code 
@@ -114,7 +120,7 @@ module OAuth2
 
       def access_token_redirect_uri(user, opts={})
         # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
-        build_response_uri @request.redirect_uri, :fragment => fetch_access_token(user, opts).to_hsh
+        build_response_uri @request.redirect_uri, :fragment => access_token_response(user, opts).to_hsh
       end
 
       def error_redirect_uri(error)

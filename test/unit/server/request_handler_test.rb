@@ -8,7 +8,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
     @refresh_token = 'tGzv3JOkF0XG5Qx2TlKWIA'
     @expires_in = 3600
     @state = 'xyz'
-    @token_type = 'bearer'
+    @scope = "scope1 scope2 scope3"
+    @token_type = 'Bearer'
     @redirect_uri = create_redirect_uri
     @token_response = {
       :access_token => @access_token,
@@ -35,7 +36,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :client_id => @client_id,
                         :response_type => 'code',
                         :redirect_uri => @redirect_uri,
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     @config[:client_datastore].stubs(:find_client_with_id).returns(nil)
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
@@ -50,7 +52,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :client_id => @client_id,
                         :response_type => 'code',
                         :redirect_uri => @redirect_uri,
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     # @config[:client_datastore].stubs(:find_client_with_id).returns(Object.new)
     @config[:code_datastore].stubs(:generate_authorization_code).returns(@code)
@@ -64,7 +67,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :client_id => @client_id,
                         :response_type => 'code',
                         :redirect_uri => @redirect_uri,
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     @config[:code_datastore].stubs(:generate_authorization_code).returns(@code)
 
@@ -93,7 +97,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :client_id => @client_id,
                         :response_type => 'code',
                         :redirect_uri => @redirect_uri,
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     @config[:code_datastore].stubs(:generate_authorization_code).returns(@code)
 
@@ -108,7 +113,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :client_id => @client_id,
                         :response_type => 'code',
                         :redirect_uri => @redirect_uri,
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     
@@ -123,7 +129,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :grant_type => 'authorization_code',
                         :redirect_uri => @redirect_uri,
                         :code => @code,
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     @config[:code_datastore].stubs(:verify_authorization_code).with(@client_id, @code, @redirect_uri).returns(nil)
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
@@ -140,7 +147,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :grant_type => 'authorization_code',
                         :redirect_uri => @redirect_uri,
                         :code => @code,
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
 
@@ -158,7 +166,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :client_id => @client_id,
                         :client_secret => @client_secret,
                         :grant_type => 'client_credentials',
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @mock_client.expects(:verify_secret).with(@client_secret).returns(false)
@@ -172,7 +181,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :client_id => @client_id,
                         :client_secret => @client_secret,
                         :grant_type => 'client_credentials',
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @mock_client.expects(:verify_secret).with(@client_secret).returns(true)
@@ -186,7 +196,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :username => 'jacksparrow',
                         :password => 'Q3zXj3w',
                         :grant_type => 'password',
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @config[:user_datastore].expects(:authenticate).with('jacksparrow', 'Q3zXj3w').returns(false)
@@ -201,7 +212,8 @@ class TestOAuth2RequestHandler < MiniTest::Unit::TestCase
                         :username => 'blackbeard',
                         :password => '$3Rdj@w',
                         :grant_type => 'password',
-                        :state => @state
+                        :state => @state,
+                        :scope => @scope
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request, @config)
     @config[:user_datastore].expects(:authenticate).with('blackbeard', '$3Rdj@w').returns(true)

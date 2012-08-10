@@ -29,6 +29,10 @@ module OAuth2
         }
       end
 
+      def to_txt
+        "#{normalized_error}, #{@error_description}"
+      end
+
       def to_uri_component
         Addressable::URI.form_encode to_hsh
       end
@@ -37,7 +41,7 @@ module OAuth2
         unless request.is_a? OAuth2::Server::Request
           raise "OAuth2::Server::Request expected but got #{request.class.name}"
         end
-        OAuth2::Helper.build_response_uri request.redirect_uri, self.to_hsh
+        OAuth2::Helper.build_response_uri request.redirect_uri, :query => self.to_hsh
       rescue Exception => e
         raise OAuth2::OAuth2Error::ServerError, e.message
       end
