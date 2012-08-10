@@ -142,7 +142,7 @@ module OAuth2
           @errors[:user_credentials] = []
           @errors[:user_credentials] << "username" if @username.nil?
           @errors[:user_credentials] << "password" if @password.nil?
-          @errors[:client] << "required"
+          @errors[:user_credentials] << "required"
           raise OAuth2Error::InvalidRequest, @errors[:user_credentials].join(" ")
         end
         true

@@ -23,11 +23,6 @@ module OAuth2
         @code_datastore = config[:code_datastore]
       end
 
-      def validate_client_id
-        @request.validate!
-        verify_client_id
-      end
-
       def client_application
         @client || verify_client_id
       end
@@ -131,6 +126,42 @@ module OAuth2
         build_response_uri @request.redirect_uri, :query => error.to_hsh
       end
 
+
+      def verify_client_id
+        @request.validate!
+        @client = @client_datastore.find_client_with_id(@request.client_id)
+        return @client unless @client.nil?
+        raise OAuth2::OAuth2Error::InvalidClient, "unknown client"
+      end
+
+      def verify_user_credentials
+        @request.validate!
+        authenticated = @user_datastore.authenticate request.username, request.password
+        return true if authenticated
+        raise OAuth2::OAuth2Error::AccessDenied, "user authentication failed"
+      end
+
+      def verify_client_credentials
+        @request.validate!
+        client = verify_client_id
+        return true if client.verify_secret @request.client_secret
+        raise OAuth2::OAuth2Error::InvalidClient, "client authentication failed"
+      end
+
+      def verify_authorization_code
+        @request.validate!
+        auth_code = @code_datastore.verify_authorization_code @request.client_id, @request.code, @request.redirect_uri
+        if auth_code.nil? || auth_code.expired? || auth_code.deactivated?
+          raise OAuth2::OAuth2Error::InvalidGrant, "invalid authorization code"
+        end
+        auth_code
+      end
+
+      def verify_request_scope
+        @request.validate!
+        raise NotImplementedError
+      end
+
     private
 
       # convenience method to build response URI  
@@ -147,36 +178,6 @@ module OAuth2
         uri.query_values = temp_query.merge(query) unless query.nil?
         uri.fragment = Addressable::URI.form_encode(fragment) unless fragment.nil?
         uri.to_s
-      end
-
-      def verify_client_id
-        @client = @client_datastore.find_client_with_id(@request.client_id)
-        return @client unless @client.nil?
-        raise OAuth2::OAuth2Error::InvalidClient, "unknown client"
-      end
-
-      def verify_user_credentials
-        authenticated = @user_datastore.authenticate request.username, request.password
-        return true if authenticated
-        raise OAuth2::OAuth2Error::AccessDenied, "user authentication failed"
-      end
-
-      def verify_client_credentials
-        client = verify_client_id
-        return true if client.verify_secret @request.client_secret
-        raise OAuth2::OAuth2Error::InvalidClient, "client authentication failed"
-      end
-
-      def verify_authorization_code
-        auth_code = @code_datastore.verify_authorization_code @request.client_id, @request.code, @request.redirect_uri
-        if auth_code.nil? || auth_code.expired? || auth_code.deactivated?
-          raise OAuth2::OAuth2Error::InvalidGrant, "invalid authorization code"
-        end
-        auth_code
-      end
-
-      def verify_request_scope
-        raise NotImplementedError
       end
     end
   end
