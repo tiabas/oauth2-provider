@@ -79,11 +79,11 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     request = OAuth2::Server::Request.new({
                         :client_id => @client_id,
                         :grant_type => 'code',
-                        :redirect_uri => 'http://client.example2.com/oauth_v2/cb',
+                        :redirect_uri => 'ftp://client.example2.com/oauth_v2/cb',
                         :state => 'xyz'
                         })
     assert_raises OAuth2::OAuth2Error::InvalidRequest do
-      assert_equal nil, request.validate_redirect_uri
+      request.validate_redirect_uri
     end
   end
 
@@ -93,7 +93,7 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
                         :grant_type => 'code',
                         :state => 'xyz'
                         })
-    assert request.validate_redirect_uri
+    assert_equal nil, request.validate_redirect_uri
   end
 
   def test_should_pass_validation_when_response_type_code_and_valid_redirect_uri
@@ -112,11 +112,11 @@ class TestOAuth2Request < MiniTest::Unit::TestCase
     request = OAuth2::Server::Request.new({
                         :client_id => @client_id,
                         :grant_type => 'token',
-                        :redirect_uri => 'http://client.example2.com/oauth_v2/cb',
+                        :redirect_uri => 'ftp://client.example2.com/oauth_v2/cb',
                         :state => 'xyz'
                         })
     assert_raises OAuth2::OAuth2Error::InvalidRequest do
-      assert_equal @redirect_uri, request.validate_redirect_uri
+      request.validate_redirect_uri
     end
   end
 

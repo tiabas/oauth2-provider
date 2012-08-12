@@ -177,10 +177,10 @@ module OAuth2
       end
 
       def validate_redirect_uri
-        return false if @redirect_uri.nil?
+        return nil if @redirect_uri.nil?
         
         @errors[:redirect_uri] = []
-
+        
         uri = Addressable::URI.parse(@redirect_uri)
         unless ["https", "http"].include? uri.scheme 
             @errors[:redirect_uri] << "unsupported uri scheme"
@@ -188,9 +188,7 @@ module OAuth2
         unless uri.fragment.nil?
             @errors[:redirect_uri] << "uri should not include fragment"
         end
-        # unless uri.query.nil?
-        #     @errors[:redirect_uri] << "URI should not include query string"
-        # end
+
         if @errors[:redirect_uri].any?
           raise OAuth2Error::InvalidRequest, @errors[:redirect_uri].join(", ")
         end
