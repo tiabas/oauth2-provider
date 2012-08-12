@@ -4,23 +4,24 @@ module OAuth2
 
       attr_reader :request, :client
 
-      def self.from_request_params(params, config=nil)
+      def self.from_request_params(params, config_file=nil)
         unless params.is_a? Hash
           raise "Request params must be a hash not #{params.class.name}"
         end
-        req = OAuth2::Request(params)
-        return new(req, config)
+        req = OAuth2::Server::Request.new(params)
+        return new(req, config_file)
       end
 
-      def initialize(request, config=nil)
+      def initialize(request, config_file=nil)
         unless request.is_a? OAuth2::Server::Request
           raise "OAuth2::Server::Request expected but got #{request.class.name}"
         end
         @request = request
-        @user_datastore = config[:user_datastore]
-        @client_datastore = config[:client_datastore]
-        @token_datastore = config[:token_datastore]
-        @code_datastore = config[:code_datastore]
+        @config = Config.new(config_file)
+        @user_datastore = @config.user_datastore
+        @client_datastore = @config.client_datastore
+        @token_datastore = @config.token_datastore
+        @code_datastore = @config.code_datastore
       end
 
       def client_application
