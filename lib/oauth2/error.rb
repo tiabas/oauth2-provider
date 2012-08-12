@@ -38,8 +38,8 @@ module OAuth2
       end
 
       def redirect_uri(request)
-        unless request.is_a? OAuth2::Server::Request
-          raise "OAuth2::Server::Request expected but got #{request.class.name}"
+        unless request.respond_to? :redirect_uri
+          raise "#{request.class.name} does not respond to redirect_uri"
         end
         OAuth2::Helper.build_response_uri request.redirect_uri, :query => self.to_hsh
       rescue Exception => e
