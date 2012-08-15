@@ -61,7 +61,7 @@ module OAuth2
       end
 
       def valid?
-        validate
+        validate!
       end
 
       def validate!
@@ -180,7 +180,7 @@ module OAuth2
         return nil if @redirect_uri.nil?
         
         @errors[:redirect_uri] = []
-        
+
         uri = Addressable::URI.parse(@redirect_uri)
         unless ["https", "http"].include? uri.scheme 
             @errors[:redirect_uri] << "unsupported uri scheme"

@@ -32,7 +32,7 @@ module OAuth2
         @request.validate!
 
         unless @request.response_type?(:code)
-          raise OAuth2Error::UnsupportedResponseType, "supported response_type #{@response_type}"
+          raise OAuth2Error::UnsupportedResponseType, "unsupported response_type #{@response_type}"
         end
         @code_datastore.generate_authorization_code client_application, @request.redirect_uri
       end
