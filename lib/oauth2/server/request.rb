@@ -170,8 +170,7 @@ module OAuth2
       end
 
       def validate_scope
-        # yield if block_given
-        return unless (@scope || @scope.strip.empty?)
+        return true unless (@scope.nil? && @scope.strip.empty?)
         @errors[:scope] = "scope cannot be empty"
         raise OAuth2Error::InvalidRequest, @errors[:scope]
       end

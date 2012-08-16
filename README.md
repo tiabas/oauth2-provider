@@ -1,7 +1,7 @@
 # OAuth2
 A server side Ruby wrapper for the OAuth 2.0 specification. The motivation for this wrapper is to provide some the core functionality that is
 needed to handle all the authentication flows that are available described in the OAuth 2.0 specification. The wrapper defines classes for handling
-client authentication requests. These classes handle all the business logic for verifying the validity request parameters.
+client authentication requests. These classes handle all the business logic for verifying the request parameters.
 
 ## Installation
   gem install oauth2-ruby
@@ -9,7 +9,6 @@ client authentication requests. These classes handle all the business logic for 
 ## Resources
 * [View Source on GitHub][code]
 * [Report Issues on GitHub][issues]
-* [Read More at the Wiki][wiki]
 
 [code]: https://github.com/tiabas/oauth2-ruby
 [issues]: https://github.com/tiabas/oauth2-ruby/issues
@@ -62,7 +61,6 @@ Here an example of how to use the request handler:
     >> handler.authorization_code_response
     => { :code=>"O0RfagVSxCn6svUlxLQvSNSpCCnImfMv2zifYDPZXO19wiPYxMzQ1MDEzNzU3", :state=>"xyz" }
 
-
     >> user = User.find_by_email('abc@xyz.com') #create the user for whom we wish get a token
     >> request_2 = OAuth2::Server::Request.new({
                       :client_id => 's6BhdRkqt3',
@@ -77,7 +75,7 @@ Here an example of how to use the request handler:
       # let's try to get the authorization code again
     >> handler_2.authorization_redirect_uri
       # we get an error
-    => OAuth2::OAuth2Error::UnsupportedResponseType: unsupported response_type
+    => OAuth2::OAuth2Error::UnsupportedResponseType: unsupported response_typev
 
     >> handler_2.access_token_redirect_uri(user)v
     => "https://client.example.com/oauth/v2/cb#access_token=YZsr0dfkzcygr2q3rxB6g9cJdqcF7M5PjankAFG8QKz695mUT8xMzQ1MDE0MDk3&token_type=Bearer&expires_in=3600&refresh_token=j2zmwCR7BbGDjP4DySRK1J2nw8O1V4aQXY3wre6ohQNNNeOwNtgxMzQ1MDE0MDk3&state=xyz"
@@ -89,7 +87,7 @@ Here an example of how to use the request handler:
 Whenever an OAuth operation fails an error of this type will be thrown. This class provided a convenience method to turn the error into an http response when
 provided with an OAuth2::Server::Request object
 
-    v>> e = OAuth2::OAuth2Error::AccessDenied.new "the user denied your request"
+    >> e = OAuth2::OAuth2Error::AccessDenied.new "the user denied your request"
     >> e.to_hsh
     => {:error=>"access_denied", :error_description=>"the user denied your request"}
 
@@ -103,7 +101,7 @@ provided with an OAuth2::Server::Request object
     => "https://client.example.com/oauth/v2/cb?error=access_denied&error_description=the%20user%20denied%20your%20request"
 
 ## Supported Ruby Versions
-This library aims to support and is [tested against][travis] the following Ruby
+This library aims to support and is tested against] the following Ruby
 implementations:
 
 * Ruby 1.8.7

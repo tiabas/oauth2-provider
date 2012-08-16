@@ -94,8 +94,8 @@ module OAuth2
           unless token
             raise OAuth2::OAuth2Error::InvalidRequest, "invalid refresh token"
           end
-        else  
-          #token = @token_datastore.generate_user_token(user, @request.scope, opts)
+        else
+          opts = opts.merge(:scope => @request.scope)
           token = @token_datastore.generate_token(client_application, user, opts) 
         end
         # deactivate authorization code 
@@ -160,7 +160,8 @@ module OAuth2
 
       def verify_request_scope
         @request.validate!
-        raise NotImplementedError
+        # return true if @token_datastore.validate_scope(@request.scope)
+        # raise OAuth2::OAuth2Error::InvalidRequest, "invalid scope" 
       end
 
     private
