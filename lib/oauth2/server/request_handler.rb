@@ -2,7 +2,7 @@ module OAuth2
   module Server
     class RequestHandler
 
-      attr_reader :request, :client
+      attr_reader :request
 
       def self.from_request_params(params, config=nil)
         unless params.is_a? Hash
@@ -23,8 +23,24 @@ module OAuth2
         @code_datastore = config[:code_datastore]
       end
 
-      def client_application
+      def client_application!
         @client || verify_client_id
+      end
+
+      def user!
+        @user || verify_user_credentials
+      end
+
+      def client_application
+        user!
+      rescue Exception => e
+        nil
+      end
+
+      def user
+        client_application!
+      rescue Exception => e
+        nil
       end
 
       def fetch_authorization_code
@@ -46,12 +62,14 @@ module OAuth2
         #   :expires_in => 3600,
         #   :refresh_token => "tGzv3JOkF0XG5Qx2TlKWIA",
         # }
+        return @token unless @token.nil?
+
         @request.validate
 
         verify_client_id
 
-        if user.nil? && !@request.grant_type?(:refresh_token)
-          raise "User must be provided"
+        if user.nil? && ![:refresh_token, :client_credentials].include? @request.grant_type
+          raise "A user must be specified for this type of request"
         end
 
         unless (@request.grant_type || @request.response_type?(:token))
@@ -65,7 +83,7 @@ module OAuth2
         end
 
         if @request.grant_type?(:authorization_code) 
-          code = verify_authorization_code
+          @code = verify_authorization_code
         end
 
         if @request.grant_type?(:password)
@@ -77,22 +95,23 @@ module OAuth2
         end
 
         if @request.grant_type?(:refresh_token) 
-          token = @token_datastore.from_refresh_token(@request.refresh_token)
-          unless token
+          @token = @token_datastore.from_refresh_token(@request.refresh_token)
+          unless @token
             raise OAuth2::OAuth2Error::InvalidRequest, "invalid refresh token"
           end
-          return token
+          return @token
         end  
 
         # run some user code
         yield if block_given?
+
         opts = { :scope => @scope }.merge(opts)
-        token = @token_datastore.generate_user_token(user, @client, opts) 
+        @token = @token_datastore.generate_user_token(user, @client, opts) 
 
-        # deactivate used authorization code 
-        code.deactivate! unless code.nil?
+        # deactivate used authorization code if 
+        @code.deactivate! unless @code.nil?
 
-        token
+        @token
       end
 
       def authorization_response
@@ -147,8 +166,8 @@ module OAuth2
       end
 
       def verify_user_credentials
-        authenticated = @user_datastore.authenticate request.username, request.password
-        return true if authenticated
+        @user = @user_datastore.authenticate request.username, request.password
+        return @user if authenticated
         raise OAuth2::OAuth2Error::AccessDenied, "user authentication failed"
       end
 
