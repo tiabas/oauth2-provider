@@ -40,7 +40,7 @@ module OAuth2
           URI::Generic.new(@scheme, nil, @host, nil, nil, @authorize_path, nil, query, nil).to_s
         end
         
-        def access_token(uri, headers={})
+        def get_access_token(uri, headers={})
             
         end  
     end 

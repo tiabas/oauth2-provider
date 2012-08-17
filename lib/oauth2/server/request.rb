@@ -61,7 +61,7 @@ module OAuth2
       end
 
       def valid?
-        validate
+        validate!
       end
 
       def validate!
@@ -75,8 +75,7 @@ module OAuth2
 
         # REQUIRED: Either response_type or grant_type  
         if @response_type.nil? && @grant_type.nil?
-          param = @response_type.nil? ? 'response_type' : 'grant_type'
-          raise OAuth2Error::InvalidRequest, "#{param} is required"
+          raise OAuth2Error::InvalidRequest, "response_type or grant_type is required"
         end
 
         # validate response_type if given
@@ -119,12 +118,12 @@ module OAuth2
     
       def validate_authorization_code
         return true unless code.nil?
-        raise OAuth2Error::InvalidRequest, "request parameters missing:: code"
+        raise OAuth2Error::InvalidRequest, "code required"
       end
 
       def validate_client_id
         return true unless @client_id.nil?
-        raise OAuth2Error::InvalidRequest, "request parameters missing:: client_id"
+        raise OAuth2Error::InvalidRequest, "client_id required"
       end
 
       def validate_client_credentials
@@ -132,16 +131,18 @@ module OAuth2
           @errors[:client] = []
           @errors[:client] << "client_id" if @client_id.nil?
           @errors[:client] << "client_secret" if @client_secret.nil?
-          raise OAuth2Error::InvalidRequest, "request parameters missing:: #{@errors[:client].join(", ")}"
+          @errors[:client] << "required"
+          raise OAuth2Error::InvalidRequest, @errors[:client].join(" ")
         end
         true
       end
 
       def validate_user_credentials
         if @username.nil? || @password.nil?
-          @errors[:user_credentials] = ["missing parameters:"]
+          @errors[:user_credentials] = []
           @errors[:user_credentials] << "username" if @username.nil?
           @errors[:user_credentials] << "password" if @password.nil?
+          @errors[:user_credentials] << "required"
           raise OAuth2Error::InvalidRequest, @errors[:user_credentials].join(" ")
         end
         true
@@ -149,47 +150,44 @@ module OAuth2
 
       def validate_response_type
         if @response_type.nil?
-          raise OAuth2Error::InvalidRequest, "missing parameters: response_type"
+          raise OAuth2Error::InvalidRequest, "response_type required"
         end
         return true if RESPONSE_TYPES.include? @response_type.to_sym
-        raise OAuth2Error::UnsupportedResponseType
+        raise OAuth2Error::UnsupportedResponseType, "response_type not supported"
       end
 
       def validate_grant_type
         if @grant_type.nil?
-          raise OAuth2Error::InvalidRequest, "missing parameters: grant_type"
+          raise OAuth2Error::InvalidRequest, "grant_type required"
         end
         return true if GRANT_TYPES.include? @grant_type.to_sym
-        raise OAuth2Error::UnsupportedGrantType
+        raise OAuth2Error::UnsupportedGrantType, "grant_type not supported"
       end
 
       def validate_refresh_token
         return true unless refresh_token.nil?
-        raise OAuth2Error::InvalidRequest, "missing parameters: refresh_token"
+        raise OAuth2Error::InvalidRequest, "refresh_token required"
       end
 
       def validate_scope
-        # yield if block_given
-        return unless (@scope || @scope.strip.empty?)
+        return true unless (@scope.nil? && @scope.strip.empty?)
         @errors[:scope] = "scope cannot be empty"
         raise OAuth2Error::InvalidRequest, @errors[:scope]
       end
 
       def validate_redirect_uri
-        return true if @redirect_uri.nil?
+        return nil if @redirect_uri.nil?
         
         @errors[:redirect_uri] = []
 
         uri = Addressable::URI.parse(@redirect_uri)
-        unless uri.scheme == "https" 
-            @errors[:redirect_uri] << "URI scheme is unsupported"
+        unless ["https", "http"].include? uri.scheme 
+            @errors[:redirect_uri] << "unsupported uri scheme"
         end
         unless uri.fragment.nil?
-            @errors[:redirect_uri] << "URI should not include URI fragment"
+            @errors[:redirect_uri] << "uri should not include fragment"
         end
-        unless uri.query.nil?
-            @errors[:redirect_uri] << "URI should not include query string"
-        end
+
         if @errors[:redirect_uri].any?
           raise OAuth2Error::InvalidRequest, @errors[:redirect_uri].join(", ")
         end

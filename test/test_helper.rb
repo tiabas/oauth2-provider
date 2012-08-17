@@ -4,6 +4,8 @@ require 'oauth2'
 require 'unit/server/request_test'
 require 'unit/server/request_handler_test'
 
+TEST_ROOT = File.dirname(__FILE__)
+
 class MiniTest::Unit::TestCase
   def create_redirect_uri
     return 'https://client.example.com/oauth_v2/cb'

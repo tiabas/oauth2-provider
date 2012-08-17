@@ -29,15 +29,19 @@ module OAuth2
         }
       end
 
+      def to_txt
+        "#{normalized_error}, #{@error_description}"
+      end
+
       def to_uri_component
         Addressable::URI.form_encode to_hsh
       end
 
-      def http_error_response(request)
-        unless request.is_a? OAuth2::Server::Request
-          raise "OAuth2::Server::Request expected but got #{request.class.name}"
+      def redirect_uri(request)
+        unless request.respond_to? :redirect_uri
+          raise "#{request.class.name} does not respond to redirect_uri"
         end
-        OAuth2::Helper.build_response_uri request.redirect_uri, self.to_hsh
+        OAuth2::Helper.build_response_uri request.redirect_uri, :query => self.to_hsh
       rescue Exception => e
         raise OAuth2::OAuth2Error::ServerError, e.message
       end
@@ -81,10 +85,6 @@ module OAuth2
 
     class TemporarilyUnavailable < Error
       @code = 503
-    end
-
-    class RateLimitExceeded < Error
-      @code = 403
     end
   end
 end

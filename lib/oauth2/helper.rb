@@ -7,7 +7,6 @@ module OAuth2
       def self.build_response_uri(redirect_uri, opts={})
         query= opts[:query]
         fragment= opts[:fragment]
-        # raise "Hash expected but got: #{query.inspect} and #{fragment.inspect}" unless (query.is_a?(Hash) && fragment.is_a?(Hash))
         uri = Addressable::URI.parse redirect_uri
         temp_query = uri.query_values || {}
         temp_frag = uri.fragment || nil
