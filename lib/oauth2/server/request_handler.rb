@@ -24,29 +24,19 @@ module OAuth2
         @code_datastore = @config.code_datastore
       end
 
-      def client_application!
+      def client_application
         @client || verify_client_id
       end
 
-      def user!
-        @user || verify_user_credentials
-      end
-
-      def client_application
-        user!
-      rescue Exception => e
-        nil
-      end
-
       def user
-        client_application!
-      rescue Exception => e
-        nil
+        @user || verify_user_credentials
       end
 
       def fetch_authorization_code
         @request.validate!
 
+        verify_client_id
+        
         unless @request.response_type?(:code)
           raise OAuth2Error::UnsupportedResponseType, "unsupported response_type #{@response_type}"
         end
@@ -65,7 +55,7 @@ module OAuth2
         response
       end
 
-      def access_token_response(user=nil, opts={})
+      def fetch_access_token(auth_user=nil, opts={})
         # {
         #   :access_token => "2YotnFZFEjr1zCsicMWpAA", 
         #   :token_type => "bearer",
@@ -74,11 +64,11 @@ module OAuth2
         # }
         return @token unless @token.nil?
 
-        @request.validate
+        @request.validate!
 
-        verify_client_id
+        auth_client = verify_client_id
 
-        if user.nil? && ![:refresh_token, :client_credentials].include? @request.grant_type
+        if auth_user.nil? && !['refresh_token', 'client_credentials'].include?(@request.grant_type.to_s)
           raise "A user must be specified for this type of request"
         end
 
@@ -95,10 +85,10 @@ module OAuth2
           code = verify_authorization_code
 
         elsif @request.grant_type?(:password)
-          user = verify_user_credentials
+          auth_user = verify_user_credentials
 
         elsif @request.grant_type?(:client_credentials)
-          client = verify_client_credentials
+          verify_client_credentials
         end
 
         if @request.grant_type?(:refresh_token) 
@@ -106,13 +96,14 @@ module OAuth2
           unless @token
             raise OAuth2::OAuth2Error::InvalidRequest, "invalid refresh token"
           end
+          return @token
         end
 
         # run some user code before generating token
         yield if block_given?
 
         opts[:scope] = @request.scope
-        @token = @token_datastore.generate_token(client_application, user, opts) 
+        @token = @token_datastore.generate_token(auth_client, auth_user, opts) 
 
         # deactivate used authorization code if present
         code.deactivate! unless code.nil?
@@ -120,7 +111,7 @@ module OAuth2
         @token
       end
 
-      def access_token_response(user, opts)
+      def access_token_response(user=nil, opts={})
         token = fetch_access_token(user, opts)
         token_response = token.to_oauth_response
         token_response[:state] = @request.state if @request.state
@@ -149,21 +140,21 @@ module OAuth2
       def verify_client_id
         @request.validate!
         @client = @client_datastore.find_client_with_id(@request.client_id)
-        return @client unless @client.nil?
+        return @client if @client
         raise OAuth2::OAuth2Error::InvalidClient, "unknown client"
       end
 
       def verify_user_credentials
         @request.validate!
         @user = @user_datastore.authenticate request.username, request.password
-        return @user if authenticated
+        return @user if @user
         raise OAuth2::OAuth2Error::AccessDenied, "user authentication failed"
       end
 
       def verify_client_credentials
         @request.validate!
-        client = verify_client_id
-        return true if client.authenticate @request.client_secret
+        @client = @client_datastore.authenticate @request.client_id, @request.client_secret
+        return @client if @client
         raise OAuth2::OAuth2Error::InvalidClient, "client authentication failed"
       end
 
