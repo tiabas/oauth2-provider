@@ -2,13 +2,9 @@ module OAuth2
   module Client
     module Request
       class ClientCredentials
-        def initialize(connection, client_id, client_secret, opts={})
-          @connection = connection
-          @grant = Grant::ClientCredentials.new(client_id, client_secret, opts)
-        end
-
-        def get_token
-
+        def initialize(client, opts={})
+          grant = Grant::ClientCredentials.new(client.client_id, client.client_secret, opts)
+          super(client, grant)
         end
       end
     end

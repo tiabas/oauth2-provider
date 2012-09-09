@@ -1,14 +1,10 @@
 module OAuth2
   module Client
     module Request
-      class AuthorizationCode
-        def initialize(connection, client_id, client_secret, code, opts={})
-          @connection = connection
-          @grant = Grant::AuthorizationCode.new(client_id, client_secret, code, opts)
-        end
-
-        def get_token
-
+      class AuthorizationCode < Base
+        def initialize(client, code, opts={})
+          grant = Grant::AuthorizationCode.new(client.client_id, client.client_secret, code, opts)
+          super(client, grant)
         end
       end
     end

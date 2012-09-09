@@ -17,29 +17,29 @@ module OAuth2
         @http_client = opts[:http_client] || OAuth2::Client::BasicHTTPClient
       end
 
-      def build_connection
-        scheme = use_ssl ? 'https' : 'http'
-        @connection = @http_client.new(scheme, @hostname)
-      end
-
       def implicit_grant(response_type, opts={})
-        Request::Implicit.new(@connection, @client_id, @client_secret, response_type, opts)
+        Request::Implicit.new(self, response_type, opts)
       end
 
       def authorization_code(code, opts={})
-        Request::AuthorizationCode.new(@connection, @client_id, @client_secret, code, opts)
+        Request::AuthorizationCode.new(self, code, opts)
       end
 
       def refresh_token(refresh_token, opts={})
-        Request::RefreshToken.new(@connection, @client_id, @client_secret, refresh_token, opts)
+        Request::RefreshToken.new(self, refresh_token, opts)
       end
 
       def client_credentials(opts={})
-        Request::ClientCredentials.new(@connection, @client_id, @client_secret, opts)
+        Request::ClientCredentials.new(self, opts)
       end
 
       def password(username, password, opts={})
-        Request::Password.new(@connection, @client_id, @client_secret, username, password, opts)
+        Request::Password.new(self, username, password, opts)
+      end
+
+      def make_request(opts={})
+        scheme = use_ssl ? 'https' : 'http'
+        @connection = @http_client.new(scheme, @hostname)
       end
     end
   end
