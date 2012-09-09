@@ -32,7 +32,11 @@ module OAuth2
         @user || verify_user_credentials
       end
 
-      def fetch_authorization_code
+      def redirect_uri
+        @redirect_uri || verify_redirect_uri
+      end
+
+      def fetch_authorization_code(user)
         @request.validate!
 
         verify_client_id
@@ -40,16 +44,16 @@ module OAuth2
         unless @request.response_type?(:code)
           raise OAuth2Error::UnsupportedResponseType, "unsupported response_type #{@response_type}"
         end
-        @code_datastore.generate_authorization_code client_application, @request.redirect_uri
+        @code_datastore.generate_authorization_code client_application, user, redirect_uri
       end
 
-      def authorization_code_response
+      def authorization_code_response(user)
         # {
         #   :code => "2YotnFZFEjr1zCsicMWpAA",
         #   :state => "auth",
         # }
         response = {
-          :code => fetch_authorization_code
+          :code => fetch_authorization_code(user)
         }
         response[:state] = @request.state unless @request.state.nil?
         response
@@ -113,19 +117,19 @@ module OAuth2
 
       def access_token_response(user=nil, opts={})
         token = fetch_access_token(user, opts)
-        token_response = token.to_oauth_response
+        token_response = token.to_params
         token_response[:state] = @request.state if @request.state
         token_response
       end
 
-      def authorization_redirect_uri(allow=false) 
+      def authorization_redirect_uri(user) 
         # https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=xyz
-        build_response_uri @request.redirect_uri, :query => authorization_code_response
+        build_response_uri redirect_uri, :query => authorization_code_response(user)
       end
 
       def access_token_redirect_uri(user, opts={})
         # http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&state=xyz&token_type=example&expires_in=3600
-        build_response_uri @request.redirect_uri, :fragment => access_token_response(user, opts)
+        build_response_uri redirect_uri, :fragment => access_token_response(user, opts)
       end
 
       def error_redirect_uri(error)
@@ -133,7 +137,7 @@ module OAuth2
         unless error.respond_to? :to_hsh
           raise "Invalid error type. Expected OAuth2::OAuth2Error but got #{error.class.name} "
         end
-        build_response_uri @request.redirect_uri, :query => error.to_hsh
+        build_response_uri redirect_uri, :query => error.to_hsh
       end
 
 
@@ -163,7 +167,7 @@ module OAuth2
         # TODO:
         # consider doing the find thru the client application
         # client_application.authorization_codes.where @request.code, @request.redirect_uri
-        auth_code = @code_datastore.verify_authorization_code client_application, @request.code, @request.redirect_uri
+        auth_code = @code_datastore.verify_authorization_code client_application, @request.code, redirect_uri
         if auth_code.nil? || auth_code.expired? || auth_code.deactivated?
           raise OAuth2::OAuth2Error::InvalidGrant, "invalid authorization code"
         end
@@ -174,6 +178,17 @@ module OAuth2
         @request.validate!
         # return true if @token_datastore.validate_scope(@request.scope)
         # raise OAuth2::OAuth2Error::InvalidRequest, "invalid scope" 
+      end
+
+      def verify_redirect_uri
+        @request.validate!
+        # TODO: parse the URI hostname and path from request redirect
+        @redirect_uri = @request.redirect_uri
+        if @redirect_uri && (@redirect_uri != client_application.redirect_uri)
+          raise OAuth2::OAuth2Error::InvalidRequest, "invalid redirect uri"
+        end
+        @redirect_uri ||= client_application.redirect_uri
+        @redirect_uri 
       end
 
     private
