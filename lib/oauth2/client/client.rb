@@ -1,18 +1,19 @@
+require 'net/http'
+
 module OAuth2
   module Client
     class Client
 
       attr_accessor :client_id, :client_secret, :hostname, :authorize_path
-                    :token_path, :use_ssl, :raise_errors, :http_client
+                    :token_path, :scheme, :raise_errors, :http_client
 
-      def initialize(client_id, client_secret, hostname, opts={})
+      def initialize(client_id, client_secret, scheme, host, opts={})
         @client_id = client_id
         @client_secret = client_secret
-        @hostname = hostname
+        @scheme = scheme
+        @host = host
         @authorize_path = opts[:authorize_path] || '/oauth/authorize'
         @token_path = opts[:token_path] || '/oauth/token'
-        @request_method = opts[:request_method] || 'post'
-        @use_ssl = opts[:ssl] || true
         @raise_errors = opts[:raise_errors] || true
         @http_client = opts[:http_client] || OAuth2::Client::BasicHTTPClient
       end
@@ -35,11 +36,6 @@ module OAuth2
 
       def password(username, password, opts={})
         Request::Password.new(self, username, password, opts)
-      end
-
-      def make_request(opts={})
-        scheme = use_ssl ? 'https' : 'http'
-        @connection = @http_client.new(scheme, @hostname)
       end
     end
   end
