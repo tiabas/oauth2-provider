@@ -15,7 +15,11 @@ module OAuth2
         @authorize_path = opts[:authorize_path] || '/oauth/authorize'
         @token_path = opts[:token_path] || '/oauth/token'
         @raise_errors = opts[:raise_errors] || true
-        @http_client = opts[:http_client] || OAuth2::Client::BasicHTTPClient
+        @http_client = opts[:http_client] || OAuth2::Client::Connection
+      end
+
+      def build_connection()
+        @http_client.new(@scheme, @host)
       end
 
       def implicit_grant(response_type, opts={})
