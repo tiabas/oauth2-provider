@@ -3,18 +3,15 @@ module OAuth2
     module Grant
       class ClientCredentials < Base
 
-        attr_reader :grant_type
-
         def initialize(client_id, client_secret, opts={})
           super(client_id, client_secret, opts)
-          @grant_type => 'client_credentials'
+          self[:grant_type] => 'client_credentials'
         end
 
-        def to_params
-          {
-            :grant_type => @grant_type
-          }.merge!(super)
+        def grant_type
+          self[:grant_type]
         end
+        
       end
     end
   end

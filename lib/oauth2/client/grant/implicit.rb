@@ -6,15 +6,11 @@ module OAuth2
         attr_reader :response_type
 
         def initialize(client_id, client_secret, response_type, opts={})
-          super(client_id, client_secret, opts)
-          @response_type = response_type
+          super(client_id, client_secret, opts={})
+          self[:response_type] = response_type
+          self[:redirect_uri] = opts[:redirect_uri]
         end
 
-        def to_params
-          {
-            :response_type => @response_type
-          }.merge!(super)
-        end
       end
     end
   end

@@ -1,27 +1,21 @@
 module OAuth2
   module Client
     module Grant
-      class Base
+      class Base < Hash
 
-        attr_accessor :client_id, :client_secret, :redirect_uri
-        
-        def initialize(client_id, client_secret, opts={})
-          @client_id = client_id
-          @client_secret = client_secret
-          @redirect_uri = opts[:redirect_uri]
+        attr_accessor :client_id, :client_secret
+
+        class << self
+          protected :new
         end
 
-        def to_params
-          params = {
-            :client_id => @client_id,
-            :client_secret => @client_secret
-          }
-          params[:redirect_uri] = @redirect_uri if @redirect_uri
-          params
+        def initialize(client_id, client_secret)
+          self[:client_id] = client_id
+          self[:client_secret] = client_secret
         end
-    
+
         def to_s
-          Addressible::URI.form_encode(to_params)
+          Addressible::URI.form_encode(self)
         end
       end
     end

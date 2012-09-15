@@ -8,18 +8,23 @@ module OAuth2
 
         def initialize(client_id, client_secret, username, password, opts={})
           super(client_id, client_secret, opts)
-          @username = username
-          @password = password
-          @grant_type = 'password'
+          self[:username] = username
+          self[:password] = password
+          self[:grant_type] = 'password'
         end
 
-        def to_params
-          {
-            :username => @username,
-            :password => @password,
-            :grant_type => @grant_type
-          }.merge!(super)
+        def username
+          self[:username]
         end
+
+        def password
+          self[:password]
+        end
+
+        def grant_type
+          self[:grant_type]
+        end
+
       end
     end
   end
