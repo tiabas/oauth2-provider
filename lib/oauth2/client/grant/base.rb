@@ -5,9 +5,9 @@ module OAuth2
 
         attr_accessor :client_id, :client_secret
 
-        class << self
-          protected :new
-        end
+        # class << self
+        #   protected :new
+        # end
 
         def initialize(client, opts={})
           @client = client
@@ -29,9 +29,9 @@ module OAuth2
 
         def request(opts={})
           path    = opts[:path]
-          headers = opts[:headers]
-          method  = opts[:method] || 'post'
-          params  = opts[:params] || {}
+          headers = opts[:headers] || {}
+          params  = opts[:params]  || {}
+          method  = opts[:method]  || 'post'
           params.merge!(self)
           @client.make_request(path, params, method, headers)
         end

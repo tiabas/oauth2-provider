@@ -3,7 +3,7 @@ module OAuth2
     module Grant
       class Password < Base
 
-        def initialize(client, password, opts={})
+        def initialize(client, username, password, opts={})
           super(client, opts)
           self[:username]   = username
           self[:password]   = password

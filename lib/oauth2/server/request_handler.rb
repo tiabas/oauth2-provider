@@ -117,7 +117,7 @@ module OAuth2
 
       def access_token_response(user=nil, opts={})
         token = fetch_access_token(user, opts)
-        token_response = token.to_params
+        token_response = token.to_hash
         token_response[:state] = @request.state if @request.state
         token_response
       end

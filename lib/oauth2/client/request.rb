@@ -1,6 +1,0 @@
-require 'oauth2/client/request/base'
-require 'oauth2/client/request/token'
-require 'oauth2/client/request/authorization_code'
-require 'oauth2/client/request/refresh_token'
-require 'oauth2/client/request/client_credentials'
-require 'oauth2/client/request/password'

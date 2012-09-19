@@ -3,8 +3,9 @@ module OAuth2
     module Grant
       class AuthorizationCode < Base
 
-        def initialize(client, opts={})
+        def initialize(client, code, opts={})
           super(client, opts)
+          self[:code] = code
           self[:grant_type] = 'authorization_code'
         end
 

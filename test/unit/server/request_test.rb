@@ -1,4 +1,4 @@
-class TestOAuth2Request < MiniTest::Unit::TestCase
+class RequestTest < MiniTest::Unit::TestCase
   
   def setup
     @code = 'G3Y6jU3a'

@@ -7,7 +7,7 @@ module OAuth2
       @@authorize_path = "/oauth/authorize"
       @@token_path     = "/oauth/token"
 
-      attr_accessor :client_id, :client_secret, :hostname, :authorize_path
+      attr_accessor :client_id, :client_secret, :hostname, :authorize_path,
                     :token_path, :scheme, :raise_errors, :http_client
 
       def initialize(client_id, client_secret, scheme, host, opts={})
