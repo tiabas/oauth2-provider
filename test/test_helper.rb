@@ -2,8 +2,8 @@ require 'test/unit'
 require 'mocha'
 require 'oauth2'
 require 'unit/client/grant_test'
-# require 'unit/server/request_test'
-# require 'unit/server/request_handler_test'
+require 'unit/server/request_test'
+require 'unit/server/request_handler_test'
 
 TEST_ROOT = File.dirname(__FILE__)
 
