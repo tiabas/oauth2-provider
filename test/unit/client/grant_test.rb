@@ -36,7 +36,8 @@ class GrantTest < MiniTest::Unit::TestCase
   def test_optional_parameters_should_not_overwrite_required_parameters
 
     grant = OAuth2::Client::Grant::Password.new(@client, 'johndoe', 'password',
-                                                :password => 'overwrite',
+                                                :username => 'myname',
+                                                :password => 'nopass',
                                                 :scope => 'xyz')
     result = {
       :client_id => @client_id,
@@ -50,20 +51,8 @@ class GrantTest < MiniTest::Unit::TestCase
   end
 
   def test_create_password_grant
-    grant = OAuth2::Client::Grant::Password.new(@client, 'johndoe', 'password')
-    result = {
-      :client_id => @client_id,
-      :client_secret => @client_secret,
-      :grant_type => 'password',
-      :username => 'johndoe',
-      :password => 'password'
-    }
-    assert_equal result, grant
-  end
-
-  def test_password_grant_token_request
     grant = OAuth2::Client::Grant::Password.new(@client, 'johndoe', 'password', :scope => 'xyz')
-    params = {
+    result = {
       :client_id => @client_id,
       :client_secret => @client_secret,
       :grant_type => 'password',
@@ -71,43 +60,36 @@ class GrantTest < MiniTest::Unit::TestCase
       :password => 'password',
       :scope => 'xyz'
     }
-    @client.expects(:make_request).with(@token_path, params, 'post', {}).returns(true)
-    grant.get_token
-  end
-
-  def test_create_refresh_token_grant
-    grant = OAuth2::Client::Grant::RefreshToken.new(@client, '2YotnFZFEjr1zCsicMWpAA')
-    result = {
-      :client_id => @client_id,
-      :client_secret => @client_secret,
-      :refresh_token => '2YotnFZFEjr1zCsicMWpAA',
-      :grant_type => 'refresh_token',
-      :scope => 'xyz'
-    }
     assert_equal result, grant
+    @client.expects(:make_request).with(@token_path, result, 'post', {}).returns(true)
+    grant.get_token
   end
 
   def test_create_refresh_token_grant
     grant = OAuth2::Client::Grant::RefreshToken.new(@client, '2YotnFZFEjr1zCsicMWpAA', :scope => 'xyz')
-    params = {
+    result = {
       :client_id => @client_id,
       :client_secret => @client_secret,
       :refresh_token => '2YotnFZFEjr1zCsicMWpAA',
       :grant_type => 'refresh_token',
       :scope => 'xyz'
     }
-    @client.expects(:make_request).with(@token_path, params, 'post', {}).returns(true)
+    assert_equal result, grant
+    @client.expects(:make_request).with(@token_path, result, 'post', {}).returns(true)
     grant.get_token
   end
 
   def test_create_client_credentials_grant
-    grant = OAuth2::Client::Grant::ClientCredentials.new(@client)
+    grant = OAuth2::Client::Grant::ClientCredentials.new(@client, :scope => 'xyz')
     result = {
       :client_id => @client_id,
       :client_secret => @client_secret,
-      :grant_type => 'client_credentials'
+      :grant_type => 'client_credentials',
+      :scope => 'xyz'
     }
     assert_equal result, grant
+    @client.expects(:make_request).with(@token_path, result, 'post', {}).returns(true)
+    grant.get_token
   end
 
   def test_create_authorization_code_grant
@@ -120,25 +102,33 @@ class GrantTest < MiniTest::Unit::TestCase
       :scope => 'xyz'
     }
     assert_equal result, grant
+    @client.expects(:make_request).with(@token_path, result, 'post', {}).returns(true)
+    grant.get_token
   end
 
-  def test_create_implicit_grant
-    grant = OAuth2::Client::Grant::Implicit.new(@client, 'code')
+  def test_implicit_grant_request_for_code
+    grant = OAuth2::Client::Grant::Implicit.new(@client, 'code', :scope => 'xyz')
     result = {
       :client_id => @client_id,
       :client_secret => @client_secret,
-      :response_type => 'code'
+      :response_type => 'code',
+      :scope => 'xyz'
     }
     assert_equal result, grant
+    @client.expects(:make_request).with(@authorize_path, result, 'post', {}).returns(true)
+    grant.get_authorization_uri
   end
 
-  def test_create_implicit_grant
-    grant = OAuth2::Client::Grant::Implicit.new(@client, 'token')
+  def test_implicit_grant_request_for_token
+    grant = OAuth2::Client::Grant::Implicit.new(@client, 'token', :scope => 'xyz')
     result = {
       :client_id => @client_id,
       :client_secret => @client_secret,
-      :response_type => 'token'
+      :response_type => 'token',
+      :scope => 'xyz'
     }
     assert_equal result, grant
+    @client.expects(:make_request).with(@authorize_path, result, 'post', {}).returns(true)
+    grant.get_authorization_uri
   end
 end
