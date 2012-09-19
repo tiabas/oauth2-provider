@@ -3,11 +3,8 @@ module OAuth2
     module Grant
       class RefreshToken < Base
 
-        attr_reader :response_type
-        attr_accessor :refresh_token
-
-        def initialize(client_id, client_secret, refresh_token, opts={})
-          super(client_id, client_secret)
+        def initialize(client, refresh_token, opts={})
+          super(client, opts)
           self[:refresh_token] = refresh_token
           self[:grant_type] = 'refresh_token'
         end

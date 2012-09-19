@@ -81,16 +81,17 @@ module OAuth2
         http
       end
 
-      def make_request(path, params, method, headers=nil)
+      def send_request(path, params, method, headers)
         connection = http_connection
 
-        if method.to_s == 'get'
+        if method.to_s.downcase == 'get'
           query = Addressable::URI.form_encode(params)
           uri = query ? [path, query].join("?") : path
           response = connection.get uri, headers
         else
           response = connection.post path, params, headers
         end
+
         handle_response(response)
         
       rescue *NET_HTTP_EXCEPTIONS

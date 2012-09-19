@@ -4,6 +4,9 @@ module OAuth2
   module Client
     class Client
 
+      @@authorize_path = "/oauth/authorize"
+      @@token_path     = "/oauth/token"
+
       attr_accessor :client_id, :client_secret, :hostname, :authorize_path
                     :token_path, :scheme, :raise_errors, :http_client
 
@@ -12,34 +15,42 @@ module OAuth2
         @client_secret = client_secret
         @scheme = scheme
         @host = host
-        @authorize_path = opts[:authorize_path] || '/oauth/authorize'
-        @token_path = opts[:token_path] || '/oauth/token'
+        @port = opts[:port]
+        @authorize_path = opts[:authorize_path] || @@authorize_path
+        @token_path = opts[:token_path] || @@token_path
         @raise_errors = opts[:raise_errors] || true
         @http_client = opts[:http_client] || OAuth2::Client::Connection
       end
 
-      def build_connection()
-        @http_client.new(@scheme, @host)
+      def http_client
+        unless @connection
+          @connection = @http_client.new(@scheme, @host, @port)
+        end
+        @connection
+      end
+
+      def make_request(path, params, method, headers)
+        http_client.send_request(path, params, method, headers)
       end
 
       def implicit_grant(response_type, opts={})
-        Request::Implicit.new(self, response_type, opts)
+        Grant::Implicit.new(self, response_type, opts)
       end
 
       def authorization_code(code, opts={})
-        Request::AuthorizationCode.new(self, code, opts)
+        Grant::AuthorizationCode.new(self, code, opts)
       end
 
       def refresh_token(refresh_token, opts={})
-        Request::RefreshToken.new(self, refresh_token, opts)
+        Grant::RefreshToken.new(self, refresh_token, opts)
       end
 
       def client_credentials(opts={})
-        Request::ClientCredentials.new(self, opts)
+        Grant::ClientCredentials.new(self, opts)
       end
 
       def password(username, password, opts={})
-        Request::Password.new(self, username, password, opts)
+        Grant::Password.new(self, username, password, opts)
       end
     end
   end

@@ -3,13 +3,10 @@ module OAuth2
     module Grant
       class Password < Base
 
-        attr_reader :grant_type
-        attr_accessor :username, :password
-
-        def initialize(client_id, client_secret, username, password, opts={})
-          super(client_id, client_secret, opts)
-          self[:username] = username
-          self[:password] = password
+        def initialize(client, password, opts={})
+          super(client, opts)
+          self[:username]   = username
+          self[:password]   = password
           self[:grant_type] = 'password'
         end
 
@@ -21,8 +18,12 @@ module OAuth2
           self[:password]
         end
 
-        def grant_type
-          self[:grant_type]
+        def username=(username)
+          self[:username] = username
+        end
+
+        def password=(password)
+          self[:password] = password
         end
 
       end

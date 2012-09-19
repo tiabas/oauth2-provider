@@ -9,13 +9,37 @@ module OAuth2
           protected :new
         end
 
-        def initialize(client_id, client_secret)
-          self[:client_id] = client_id
-          self[:client_secret] = client_secret
+        def initialize(client, opts={})
+          @client = client
+          self[:client_id] = client.client_id
+          self[:client_secret] = client.client_secret
+          opts.each do |param, value|
+            next if self[param] || value.nil?
+            self[param.to_sym] = value
+          end
         end
 
-        def to_s
-          Addressible::URI.form_encode(self)
+        def grant_type
+          self[:grant_type]
+        end
+
+        def response_type
+          self[:response_type]
+        end
+
+        def request(opts={})
+          path    = opts[:path]
+          headers = opts[:headers]
+          method  = opts[:method] || 'post'
+          params  = opts[:params] || {}
+          params.merge!(self)
+          @client.make_request(path, params, method, headers)
+        end
+
+        def get_token(opts={})
+          opts[:path] ||= @client.token_path
+          response = request(opts)
+          yield response if block_given?
         end
       end
     end

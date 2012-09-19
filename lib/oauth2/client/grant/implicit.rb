@@ -3,12 +3,14 @@ module OAuth2
     module Grant
       class Implicit < Base
 
-        attr_reader :response_type
-
-        def initialize(client_id, client_secret, response_type, opts={})
-          super(client_id, client_secret, opts={})
+        def initialize(client, response_type, opts={})
+          super(client, opts)
           self[:response_type] = response_type
-          self[:redirect_uri] = opts[:redirect_uri]
+        end
+
+        def get_authorization_uri(opts={})
+          opts[:path] ||= @client.authorize_path
+          request(opts)
         end
 
       end
