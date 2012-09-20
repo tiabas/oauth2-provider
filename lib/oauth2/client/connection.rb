@@ -81,15 +81,22 @@ module OAuth2
         http
       end
 
-      def send_request(path, params, method, headers)
+      def send_request(path, params, method, headers={})
         connection = http_connection
-
-        if method.to_s.downcase == 'get'
+        
+        case method.to_s.downcase
+        when 'get'
           query = Addressable::URI.form_encode(params)
           uri = query ? [path, query].join("?") : path
           response = connection.get uri, headers
-        else
+        when 'post'
           response = connection.post path, params, headers
+        when 'put'
+          response = connection.put path, params, headers
+        when 'delete'
+
+        else
+
         end
 
         handle_response(response)
