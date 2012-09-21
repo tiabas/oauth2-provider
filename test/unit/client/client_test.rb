@@ -1,73 +1,84 @@
-# class TestOAuth2Request < MiniTest::Unit::TestCase
+class OAuth2ClientTest < MiniTest::Unit::TestCase
 
+  def setup
+    @client_id = 's6BhdRkqt3'
+    @client_secret = '4hJZY88TCBB9q8IpkeualA2lZsUhOSclkkSKw3RXuE'
+    @host = 'server.example.com' 
+    @scheme = 'https'
+    @client = OAuth2::Client::Client.new(@client_id, @client_secret, @scheme, @host)
+    @http_connection = mock()
+    @client.expects(:http_connection).returns(@http_connection)
+  end
 
-#   def test_authorization_code_with_required_parameters
-#     r = OAUTH2::Client::Request::AuthorizationCode.new({ :response_type => 'code', :client_id => 's6BhdRkqt3' })
-#     assert_equal(r, { :response_type => 'code', :client_id => 's6BhdRkqt3' })
-#   end
+  def test_implicit_grant_code_request
+    auth = @client.implicit('code', :redirect_uri => 'http://client.example.com/oauth/v2/callback')
+    params = {
+      :client_id => @client_id ,
+      :client_secret => @client_secret,
+      :response_type => 'code',
+      :redirect_uri => 'http://client.example.com/oauth/v2/callback'
+    }
+    @http_connection.expects(:send_request).with('/oauth/authorize', params, 'get', {}).returns(true)
+    auth.get_authorization_uri
+  end
 
-#   def test_authorization_code_to_string
-#     r = OAUTH2::Client::Grant::AuthorizationCode.new({ :response_type => 'code', :client_id => 's6BhdRkqt3' })
-#     assert_equal(r.to_s, 'response_type=code&client_id=s6BhdRkqt3')
-#   end
+  def test_implicit_grant_token_request
+    auth = @client.implicit('token', :redirect_uri => 'http://client.example.com/oauth/v2/callback')
+    params = {
+      :client_id => @client_id ,
+      :client_secret => @client_secret,
+      :response_type => 'token',
+      :redirect_uri => 'http://client.example.com/oauth/v2/callback'
+    }
+    @http_connection.expects(:send_request).with('/oauth/authorize', params, 'get', {}).returns(true)
+    auth.get_authorization_uri
+  end
 
-#   def test_creation_of_client_for_authorization_code_flow
-#       c = OAUTH2::Client.new(
-#                           :authorization_code, 
-#                           {:client_id => 's6BhdRkqt3', :state => 'xyz', :redirect_uri => 'http://client.example.com/oauth_v2/callback'},
-#                           'http', 
-#                           'server.example.com', 
-#                           authorize_path='/oauth_v2/authorize')
-#       assert_equal(c.authorization_uri, 'http://server.example.com/oauth_v2/authorize?client_id=s6BhdRkqt3&state=xyz&redirect_uri=http%3A%2F%2Fclient.example.com%2Foauth_v2%2Fcallback&response_type=code')
-#   end
+  def test_authorization_code_grant
+    auth = @client.authorization_code('SplxlOBeZQQYbYS6WxSbIA')
+    params = {
+      :client_id => @client_id ,
+      :client_secret => @client_secret,
+      :code => 'SplxlOBeZQQYbYS6WxSbIA',
+      :grant_type => 'authorization_code' 
+    }
+    @http_connection.expects(:send_request).with('/oauth/token', params, 'post', {}).returns(true)
+    auth.get_token
+  end
 
-#   def test_creation_of_client_for_token_flow
-#       c = OAUTH2::Client.new(
-#                           :refresh_token, 
-#                           {:client_id => 's6BhdRkqt3', :state => 'xyz', :redirect_uri => 'http://client.example.com/oauth_v2/callback' },
-#                           'http', 
-#                           'server.example.com', 
-#                           authorize_path='/oauth_v2/authorize')
-#       assert_equal(c.authorization_uri, 'http://server.example.com/oauth_v2/authorize?client_id=s6BhdRkqt3&state=xyz&redirect_uri=http%3A%2F%2Fclient.example.com%2Foauth_v2%2Fcallback&response_type=token')
-#   end
+  def test_resource_owner_password_credentials_grant
+    auth = @client.password('johndoe', 'A3ddj3w')
+    params = {
+      :client_id => @client_id ,
+      :client_secret => @client_secret,
+      :username => 'johndoe',
+      :password => 'A3ddj3w',
+      :grant_type => 'password' 
+    }
+    @http_connection.expects(:send_request).with('/oauth/token', params, 'post', {}).returns(true)
+    auth.get_token
+  end
 
-#   def test_creation_of_client_for_password_flow
-#       c = OAUTH2::Client.new(
-#                           :password, 
-#                           {:username => 'johndoe', :password => 'A3ddj3w'},
-#                           'http', 
-#                           'server.example.com', 
-#                           authorize_path='/oauth_v2/authorize')
-#       assert_equal(c.authorization_uri, 'http://server.example.com/oauth_v2/authorize?username=johndoe&password=A3ddj3w&grant_type=password')
-#   end
+  def test_client_credentials_grant
+    auth = @client.client_credentials
+    params = {
+      :client_id => @client_id ,
+      :client_secret => @client_secret,
+      :grant_type => 'client_credentials' 
+    }
+    @http_connection.expects(:send_request).with('/oauth/token', params, 'post', {}).returns(true)
+    auth.get_token
+  end
 
-#   def test_creation_of_client_for_credentials_flow
-#       c = OAUTH2::Client.new(
-#                           :credentials, 
-#                           {},
-#                           'http', 
-#                           'server.example.com', 
-#                           authorize_path='/oauth_v2/authorize')
-#       assert_equal(c.authorization_uri, 'http://server.example.com/oauth_v2/authorize?grant_type=client_credentials')
-#   end
-#   # def test_authorization_request_url
-#   #     params = {
-#   #         :response_type => 'code',
-#   #         :client_id => 's6BhdRkqt3',
-#   #         :redirect_uri => 'https://client.example.com/',
-#   #         :scope => 'scope',
-#   #         :state => 'xyz'
-#   #     }
-#   #     r = OAUTH2::Request.new('https://server.example.com/authorize', params)
-#   #     puts r.to_url
-#   # end
-#   # 
-#   # def test_access_token_request_url_with_correct_redirect_url
-#   #     params = {
-#   #         :grant_type => 'authorization_code',
-#   #         :code => 'SplxlOBeZQQYbYS6WxSbIA',
-#   #         :redirect_uri => 'https://client.example.com/'
-#   #     }
-#   #     OAUTH2::Request.new('https://server.example.com/authorize', params)
-#   # end
-# end
+  def test_refresh_token_grant
+    auth = @client.refresh_token('tGzv3JOkF0XG5Qx2TlKWIA')
+    params = {
+      :client_id => @client_id ,
+      :client_secret => @client_secret,
+      :refresh_token => 'tGzv3JOkF0XG5Qx2TlKWIA',
+      :grant_type => 'refresh_token' 
+    }
+    @http_connection.expects(:send_request).with('/oauth/token', params, 'post', {}).returns(true)
+    auth.get_token
+  end
+end

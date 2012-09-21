@@ -9,7 +9,8 @@ module OAuth2
         end
 
         def get_authorization_uri(opts={})
-          opts[:path] ||= @client.authorize_path
+          opts[:path]   ||= @client.authorize_path
+          opts[:method] ||= 'get'
           request(opts)
         end
 

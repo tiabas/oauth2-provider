@@ -115,7 +115,7 @@ class GrantTest < MiniTest::Unit::TestCase
       :scope => 'xyz'
     }
     assert_equal result, grant
-    @client.expects(:make_request).with(@authorize_path, result, 'post', {}).returns(true)
+    @client.expects(:make_request).with(@authorize_path, result, 'get', {}).returns(true)
     grant.get_authorization_uri
   end
 
@@ -128,7 +128,7 @@ class GrantTest < MiniTest::Unit::TestCase
       :scope => 'xyz'
     }
     assert_equal result, grant
-    @client.expects(:make_request).with(@authorize_path, result, 'post', {}).returns(true)
+    @client.expects(:make_request).with(@authorize_path, result, 'get', {}).returns(true)
     grant.get_authorization_uri
   end
 end

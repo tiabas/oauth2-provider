@@ -22,18 +22,18 @@ module OAuth2
         @http_client = opts[:http_client] || OAuth2::Client::Connection
       end
 
-      def http_client
+      def http_connection
         unless @connection
-          @connection = @http_client.new(@scheme, @host, @port)
+          @connection = @http_connection.new(@scheme, @host, @port)
         end
         @connection
       end
 
       def make_request(path, params, method, headers)
-        http_client.send_request(path, params, method, headers)
+        http_connection.send_request(path, params, method, headers)
       end
 
-      def implicit_grant(response_type, opts={})
+      def implicit(response_type, opts={})
         Grant::Implicit.new(self, response_type, opts)
       end
 
