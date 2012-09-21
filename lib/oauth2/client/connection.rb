@@ -4,6 +4,7 @@ rescue LoadError
   warn "Warning: no such file to load -- net/https. Make sure openssl is installed if you want ssl support"
   require 'net/http'
 end
+require 'zlib'
 require 'addressable/uri'
 
 module OAuth2
@@ -81,21 +82,33 @@ module OAuth2
         http
       end
 
-      def send_request(path, params, method, headers)
+      def send_request(path, params, method, headers={})
         connection = http_connection
 
-        if method.to_s.downcase == 'get'
+        case method.to_s.downcase
+        when 'get'
           query = Addressable::URI.form_encode(params)
           uri = query ? [path, query].join("?") : path
-          response = connection.get uri, headers
+          response = connection.get(uri, headers)
+        when 'post'
+          response = connection.post(path, params, headers)
+        when 'put'
+          response = connection.put(path, params, headers)
+        when 'delete'
+          response = connection.delete(path, params, headers)
         else
-          response = connection.post path, params, headers
+          raise "Unsupported HTTP method, #{method}"
         end
 
         handle_response(response)
-        
       rescue *NET_HTTP_EXCEPTIONS
         raise Error::ConnectionFailed, $!
+      end
+
+      def redirect_limit_reached?
+          @redirect_count ||= 0
+          @redirect_count += 1
+          @redirect_count > @max_redirects
       end
 
       def handle_response(response)
@@ -103,7 +116,7 @@ module OAuth2
         when 301, 302, 303, 307
           @redirect_count ||= 0
           @redirect_count += 1
-          return response if @redirect_count > @max_redirects
+          return response if redirect_limit_reached?
           if response.status == 303
             method = :get
             params = nil
@@ -119,6 +132,6 @@ module OAuth2
           raise Error.new(response), "Unhandled status code value of #{response.status}"
         end
       end
-    end 
-  end           
+    end
+  end
 end

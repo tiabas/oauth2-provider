@@ -1,4 +1,5 @@
 require 'addressable/uri'
+
 module OAuth2
   module OAuth2Error
     class Error < StandardError
@@ -22,7 +23,7 @@ module OAuth2
         err.downcase
       end
 
-      def to_hsh
+      def to_hash
         {
           :error             => normalized_error,
           :error_description => @error_description
@@ -34,57 +35,37 @@ module OAuth2
       end
 
       def to_uri_component
-        Addressable::URI.form_encode to_hsh
+        Addressable::URI.form_encode to_hash
       end
 
       def redirect_uri(request)
         unless request.respond_to? :redirect_uri
           raise "#{request.class.name} does not respond to redirect_uri"
         end
-        OAuth2::Helper.build_response_uri request.redirect_uri, :query => self.to_hsh
+        OAuth2::Helper.build_response_uri request.redirect_uri, :query => self.to_hash
       rescue Exception => e
         raise OAuth2::OAuth2Error::ServerError, e.message
       end
     end
 
-    class AccessDenied < Error
-      @code = 401
-    end
+    class AccessDenied < Error; end
 
-    class InvalidClient < Error
-      @code = 401
-    end
+    class InvalidClient < Error; end
 
-    class InvalidGrant < Error
-      @code = 401
-    end
+    class InvalidGrant < Error; end
 
-    class InvalidRequest < Error
-      @code = 400
-    end
+    class InvalidRequest < Error; end
 
-    class InvalidScope < Error
-      @code = 400
-    end
+    class InvalidScope < Error; end
 
-    class ServerError < Error
-      @code = 500
-    end
+    class ServerError < Error; end
 
-    class UnauthorizedClient < Error
-      @code = 400
-    end
+    class UnauthorizedClient < Error; end
 
-    class UnsupportedGrantType < Error
-      @code = 400
-    end
+    class UnsupportedGrantType < Error; end
 
-    class UnsupportedResponseType < Error
-      @code = 400
-    end
+    class UnsupportedResponseType < Error; end
 
-    class TemporarilyUnavailable < Error
-      @code = 503
-    end
+    class TemporarilyUnavailable < Error; end
   end
 end
