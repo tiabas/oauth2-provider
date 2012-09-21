@@ -23,7 +23,7 @@ module OAuth2
         Zlib::GzipFile::Error,
       ]
 
-      attr_reader :scheme, :host 
+      attr_accessor :scheme, :host, :port, :max_redirects, :ssl
       
       def initialize(scheme, host, opts={})
         @host = host
@@ -41,7 +41,7 @@ module OAuth2
       end
 
       def use_ssl
-        scheme == "https" ? true : false
+        @scheme == "https" ? true : false
       end
 
       def configure_ssl(http, ssl)
@@ -74,12 +74,12 @@ module OAuth2
         cert_store
       end
 
-      def http_connection()
-        http = Net::HTTP.new(@host, @port)
+      def http_connection
+        @http_client = Net::HTTP.new(@host, @port)
         if use_ssl
-          configure_ssl(http, @ssl)
+          configure_ssl(@http_client, @ssl)
         end
-        http
+        @http_client
       end
 
       def send_request(path, params, method, headers={})
@@ -87,7 +87,7 @@ module OAuth2
 
         case method.to_s.downcase
         when 'get'
-          query = Addressable::URI.form_encode(params)
+          query = params ? Addressable::URI.form_encode(params) : nil
           uri = query ? [path, query].join("?") : path
           response = connection.get(uri, headers)
         when 'post'
@@ -100,7 +100,23 @@ module OAuth2
           raise "Unsupported HTTP method, #{method}"
         end
 
-        handle_response(response)
+        case response.status
+        when 301, 302, 303, 307
+          return response if redirect_limit_reached?
+          if response.status == 303
+            method = :get
+            params = nil
+          end
+          uri = Addressable::URI.parse(response.headers['Location'])
+          @scheme = uri.scheme
+          @host = uri.host
+          @port = uri.port
+          send_request(uri.path, params, method)
+        when 200..599
+          response
+        else
+          raise Error.new(response), "Unhandled status code value of #{response.status}"
+        end
       rescue *NET_HTTP_EXCEPTIONS
         raise Error::ConnectionFailed, $!
       end
@@ -109,28 +125,6 @@ module OAuth2
           @redirect_count ||= 0
           @redirect_count += 1
           @redirect_count > @max_redirects
-      end
-
-      def handle_response(response)
-        case response.status
-        when 301, 302, 303, 307
-          @redirect_count ||= 0
-          @redirect_count += 1
-          return response if redirect_limit_reached?
-          if response.status == 303
-            method = :get
-            params = nil
-          end
-          # uri = Addressable::URI.parse(response.headers['location'])
-          # @host =
-          # @port =
-          # path =
-          make_request(path, params, method)
-        when 200..599
-          response
-        else
-          raise Error.new(response), "Unhandled status code value of #{response.status}"
-        end
       end
     end
   end
