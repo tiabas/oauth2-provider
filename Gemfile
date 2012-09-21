@@ -11,5 +11,3 @@ gem 'rake'
 gem 'mocha', ">=0.12.1", :require => false
 
 gem 'activesupport'
-
-# gem "minitest", "~> 3.3.0"
