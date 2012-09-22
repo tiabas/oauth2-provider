@@ -1,6 +1,8 @@
 class GrantTest < MiniTest::Unit::TestCase
 
   def setup
+    @scheme         = 'https'
+    @host           = 'example.com'
     @client_id      = 's6BhdRkqt3'
     @client_secret  = 'SplxlOBeZQQYbYS6WxSbIA'
     @authorize_path = "/oauth/authorize"
@@ -8,6 +10,8 @@ class GrantTest < MiniTest::Unit::TestCase
     @client = mock()
     @client.stubs(:client_id).returns(@client_id)
     @client.stubs(:client_secret).returns(@client_secret)
+    @client.stubs(:scheme).returns(@scheme)
+    @client.stubs(:host).returns(@host)
     @client.stubs(:authorize_path).returns(@authorize_path)
     @client.stubs(:token_path).returns(@token_path)  
   end
@@ -31,6 +35,7 @@ class GrantTest < MiniTest::Unit::TestCase
       :password => 'password'
     }
     assert_equal result, grant
+
   end
 
   def test_optional_parameters_should_not_overwrite_required_parameters
@@ -113,6 +118,8 @@ class GrantTest < MiniTest::Unit::TestCase
       :response_type => 'code',
       :scope => 'xyz'
     }
+    assert_equal 'client_id=s6BhdRkqt3&scope=xyz&response_type=code', grant.to_query
+    assert_equal 'https://example.com/oauth/authorize?client_id=s6BhdRkqt3&response_type=code&scope=xyz', grant.authorization_url
     assert_equal result, grant
     @client.expects(:make_request).with(@authorize_path, result, 'get', {}).returns(true)
     grant.get_authorization_uri
@@ -125,6 +132,8 @@ class GrantTest < MiniTest::Unit::TestCase
       :response_type => 'token',
       :scope => 'xyz'
     }
+    assert_equal 'client_id=s6BhdRkqt3&scope=xyz&response_type=token', grant.to_query
+    assert_equal 'https://example.com/oauth/authorize?client_id=s6BhdRkqt3&response_type=token&scope=xyz', grant.authorization_url
     assert_equal result, grant
     @client.expects(:make_request).with(@authorize_path, result, 'get', {}).returns(true)
     grant.get_authorization_uri

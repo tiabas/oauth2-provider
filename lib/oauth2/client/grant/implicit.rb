@@ -6,12 +6,7 @@ module OAuth2
         def initialize(client, response_type, opts={})
           super(client, opts)
           self[:response_type] = response_type
-        end
-
-        def to_params
-          params = self.clone
-          params.delete(:client_secret) if params[:client_secret]
-          params
+          self.delete(:client_secret) if self[:client_secret] # DO NOT send client_secret for implicit grant
         end
 
         def authorization_path

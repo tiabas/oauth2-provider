@@ -19,10 +19,6 @@ module OAuth2
           end
         end
 
-        def to_params
-          self
-        end
-
         def grant_type
           self[:grant_type]
         end
@@ -36,7 +32,7 @@ module OAuth2
           headers = opts[:headers] || {}
           params  = opts[:params]  || {}
           method  = opts[:method]  || 'post'
-          params.merge!(to_params)
+          params.merge!(self)
           @client.make_request(path, params, method, headers)
         end
 
@@ -47,7 +43,7 @@ module OAuth2
         end
 
         def to_query
-          Addressable::URI.form_encode(to_params)
+          Addressable::URI.form_encode(self)
         end
 
         def to_url(path)
@@ -56,7 +52,7 @@ module OAuth2
                 :host   => @client.host,
                 :path   => path
                 )
-          uri.query_values = to_params
+          uri.query_values = self
           uri.to_s
         end
       end

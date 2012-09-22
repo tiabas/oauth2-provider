@@ -104,11 +104,10 @@ provided with an OAuth2::Server::Request object
 This library aims to support and is tested against] the following Ruby
 implementations:
 
-* Ruby 1.8.7
 * Ruby 1.9.2
 * Ruby 1.9.3
 
 ## Copyright
-Copyright (c) 2011 Kevin Mutyaba
+Copyright (c) 2012 Kevin Mutyaba
 See [LICENSE][] for details.
 [license]: https://github.com/tiabas/oauth2-ruby/blob/master/LICENSE
