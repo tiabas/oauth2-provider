@@ -110,7 +110,6 @@ class GrantTest < MiniTest::Unit::TestCase
     grant = OAuth2::Client::Grant::Implicit.new(@client, 'code', :scope => 'xyz')
     result = {
       :client_id => @client_id,
-      :client_secret => @client_secret,
       :response_type => 'code',
       :scope => 'xyz'
     }
@@ -123,7 +122,6 @@ class GrantTest < MiniTest::Unit::TestCase
     grant = OAuth2::Client::Grant::Implicit.new(@client, 'token', :scope => 'xyz')
     result = {
       :client_id => @client_id,
-      :client_secret => @client_secret,
       :response_type => 'token',
       :scope => 'xyz'
     }

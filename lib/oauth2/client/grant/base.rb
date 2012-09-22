@@ -19,6 +19,10 @@ module OAuth2
           end
         end
 
+        def to_params
+          self
+        end
+
         def grant_type
           self[:grant_type]
         end
@@ -32,7 +36,7 @@ module OAuth2
           headers = opts[:headers] || {}
           params  = opts[:params]  || {}
           method  = opts[:method]  || 'post'
-          params.merge!(self)
+          params.merge!(to_params)
           @client.make_request(path, params, method, headers)
         end
 
@@ -40,6 +44,20 @@ module OAuth2
           opts[:path] ||= @client.token_path
           response = request(opts)
           yield response if block_given?
+        end
+
+        def to_query
+          Addressable::URI.form_encode(to_params)
+        end
+
+        def to_url(path)
+          uri = Addressable::URI.new(
+                :scheme => @client.scheme,
+                :host   => @client.host,
+                :path   => path
+                )
+          uri.query_values = to_params
+          uri.to_s
         end
       end
     end

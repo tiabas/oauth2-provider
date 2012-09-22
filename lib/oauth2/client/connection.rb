@@ -9,7 +9,7 @@ require 'addressable/uri'
 
 module OAuth2
   module Client
-    class Connection < Net::HTTP
+    class Connection
       NET_HTTP_EXCEPTIONS = [
         EOFError,
         Errno::ECONNABORTED,
@@ -22,13 +22,13 @@ module OAuth2
         SocketError,
         Zlib::GzipFile::Error,
       ]
-
+      
       attr_accessor :scheme, :host, :port, :max_redirects, :ssl
       
       def initialize(scheme, host, opts={})
+        @scheme = scheme
         @host = host
-        @port = opts[:port] || nil
-        @scheme = opts[:scheme] || "https"
+        @port = opts[:port]
         @max_redirects = opts[:max_redirects] || 5
         @ssl = opts[:ssl] || {}
       end
@@ -59,10 +59,10 @@ module OAuth2
 
       def ssl_verify_mode(ssl)
         ssl[:verify_mode] || begin
-          if ssl.fetch(:verify, true)
+          if ssl.fetch(:verify, false)
             OpenSSL::SSL::VERIFY_PEER
           else
-            OpenSSL::SSL::VERIFY_NONE
+          OpenSSL::SSL::VERIFY_NONE
           end
         end
       end
@@ -74,7 +74,7 @@ module OAuth2
         cert_store
       end
 
-      def http_connection
+      def http_connection 
         @http_client = Net::HTTP.new(@host, @port)
         if use_ssl
           configure_ssl(@http_client, @ssl)
@@ -99,15 +99,15 @@ module OAuth2
         else
           raise "Unsupported HTTP method, #{method}"
         end
-
-        case response.status
+        status = response.code.to_i
+        case status
         when 301, 302, 303, 307
           return response if redirect_limit_reached?
-          if response.status == 303
+          if status == 303
             method = :get
             params = nil
           end
-          uri = Addressable::URI.parse(response.headers['Location'])
+          uri = Addressable::URI.parse(response.header['Location'])
           @scheme = uri.scheme
           @host = uri.host
           @port = uri.port
@@ -115,10 +115,10 @@ module OAuth2
         when 200..599
           response
         else
-          raise Error.new(response), "Unhandled status code value of #{response.status}"
+          raise "Unhandled status code value of #{response.code}"
         end
       rescue *NET_HTTP_EXCEPTIONS
-        raise Error::ConnectionFailed, $!
+        raise "Error::ConnectionFailed, $!"
       end
 
       def redirect_limit_reached?

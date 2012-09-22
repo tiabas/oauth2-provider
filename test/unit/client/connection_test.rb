@@ -1,9 +1,9 @@
 class ConnectionTest < MiniTest::Unit::TestCase
 
-  def build_mock_response(status, headers, body)
+  def build_mock_response(code, headers, body)
     response = mock()
-    response.stubs(:status).returns(status)
-    response.stubs(:headers).returns(headers)
+    response.stubs(:code).returns(code)
+    response.stubs(:header).returns(headers)
     response.stubs(:body).returns(body)
     response
   end
@@ -26,9 +26,9 @@ class ConnectionTest < MiniTest::Unit::TestCase
 
     response = @user_agent.send_request(path, params, method, {})
 
-    assert_equal 200, response.status
+    assert_equal 200, response.code
     assert_equal 'success', response.body
-    assert_equal ({'Content-Type' => 'text/plain'}), response.headers
+    assert_equal 'text/plain', response.header['Content-Type']
   end
 
   def test_should_make_successfull_delete_request
@@ -43,9 +43,9 @@ class ConnectionTest < MiniTest::Unit::TestCase
    
     response = @user_agent.send_request(path, params, method, {})
 
-    assert_equal 200, response.status
+    assert_equal 200, response.code
     assert_equal 'success', response.body
-    assert_equal ({'Content-Type' => 'text/plain'}), response.headers
+    assert_equal 'text/plain', response.header['Content-Type']
   end
 
   def test_should_make_successfull_post_request
@@ -60,9 +60,9 @@ class ConnectionTest < MiniTest::Unit::TestCase
 
     response = @user_agent.send_request(path, params, method, {})
 
-    assert_equal 200, response.status
+    assert_equal 200, response.code
     assert_equal 'success', response.body
-    assert_equal ({'Content-Type' => 'text/plain'}), response.headers
+    assert_equal 'text/plain', response.header['Content-Type']
   end
 
   def test_should_make_successfull_put_request
@@ -77,9 +77,9 @@ class ConnectionTest < MiniTest::Unit::TestCase
 
     response = @user_agent.send_request(path, params, method, {})
 
-    assert_equal 200, response.status
+    assert_equal 200, response.code
     assert_equal 'success', response.body
-    assert_equal ({'Content-Type' => 'text/plain'}), response.headers
+    assert_equal 'text/plain', response.header['Content-Type']
   end
 
   def test_client_should_follow_redirect
@@ -100,9 +100,9 @@ class ConnectionTest < MiniTest::Unit::TestCase
     response = @user_agent.send_request(path, params, method, headers)
 
     assert_equal 'abc.example.com', @user_agent.host
-    assert_equal 200, response.status
+    assert_equal 200, response.code
     assert_equal 'success', response.body
-    assert_equal ({'Content-Type' => 'text/plain'}), response.headers
+    assert_equal 'text/plain', response.header['Content-Type']
   end
 
   def test_client_should_return_response_when_redirect_limit_is_exceeded
@@ -125,8 +125,8 @@ class ConnectionTest < MiniTest::Unit::TestCase
     response = @user_agent.send_request(path, params, method, headers)
     
     assert_equal 'xyz.example.com', @user_agent.host
-    assert_equal 302, response.status
+    assert_equal 302, response.code
     assert_equal '', response.body
-    assert_equal ({'Location' => 'http://123.example.com/'}), response.headers
+    assert_equal 'http://123.example.com/', response.header['Location']
   end
 end

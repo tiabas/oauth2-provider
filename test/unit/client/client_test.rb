@@ -14,7 +14,6 @@ class OAuth2ClientTest < MiniTest::Unit::TestCase
     auth = @client.implicit('code', :redirect_uri => 'http://client.example.com/oauth/v2/callback')
     params = {
       :client_id => @client_id ,
-      :client_secret => @client_secret,
       :response_type => 'code',
       :redirect_uri => 'http://client.example.com/oauth/v2/callback'
     }
@@ -26,7 +25,6 @@ class OAuth2ClientTest < MiniTest::Unit::TestCase
     auth = @client.implicit('token', :redirect_uri => 'http://client.example.com/oauth/v2/callback')
     params = {
       :client_id => @client_id ,
-      :client_secret => @client_secret,
       :response_type => 'token',
       :redirect_uri => 'http://client.example.com/oauth/v2/callback'
     }
