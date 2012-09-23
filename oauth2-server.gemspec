@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name         = 'oauth2'
-  s.version      = '0.1.4'
+  s.version      = '0.2.0'
   s.date         = '2012-07-17'
   s.summary      = "OAuth v2 Ruby Library"
   s.description  = "OAuth Server/Client Framework"
