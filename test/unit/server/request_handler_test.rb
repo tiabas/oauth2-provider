@@ -137,7 +137,10 @@ class RequestHandlerTest < MiniTest::Unit::TestCase
                         :state => @state,
                         :scope => @scope
                         })
-    @config.code_datastore.expects(:verify_authorization_code).with(@client_app, '7xI4fk3Z', @redirect_uri).returns(nil)
+    @config.code_datastore.expects(:verify).with(
+        :client => @client_app, 
+        :code => '7xI4fk3Z', 
+        :redirect_uri => @redirect_uri).returns(nil)
     request_handler = OAuth2::Server::RequestHandler.new(request)
 
     assert_raises OAuth2::OAuth2Error::InvalidGrant do
@@ -156,10 +159,13 @@ class RequestHandlerTest < MiniTest::Unit::TestCase
                         :scope => @scope
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request)
-    @config.code_datastore.expects(:verify_authorization_code).with(@client_app, @code, @redirect_uri).returns(@mock_code)
+    @config.code_datastore.expects(:verify).with(        
+        :client => @client_app, 
+        :code => @code, 
+        :redirect_uri => @redirect_uri).returns(@mock_code)
     @mock_code.expects(:expired?).returns(false)
     @mock_code.expects(:deactivated?).returns(false)
-    @config.token_datastore.expects(:generate_token).with(@client_app, @mock_user, {:scope => 'scope1 scope2'}).returns(@token)
+    @config.token_datastore.expects(:generate_token).with(@client_app, {:user => @mock_user, :scope => 'scope1 scope2'}).returns(@token)
     @mock_code.expects(:deactivate!).returns(false)
     assert_equal @token_response, request_handler.access_token_response(@mock_user)
   end
@@ -189,7 +195,7 @@ class RequestHandlerTest < MiniTest::Unit::TestCase
                         :scope => @scope
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request)
-    @config.token_datastore.expects(:generate_token).with(@client_app, nil, {:scope => 'scope1 scope2'}).returns(@token)
+    @config.token_datastore.expects(:generate_token).with(@client_app, {:user => nil, :scope => 'scope1 scope2'}).returns(@token)
     assert_equal @token_response, request_handler.access_token_response
   end
 
@@ -220,7 +226,7 @@ class RequestHandlerTest < MiniTest::Unit::TestCase
                         })
     request_handler = OAuth2::Server::RequestHandler.new(request)
     @config.user_datastore.expects(:authenticate).with('blackbeard', '$3Rdj@w').returns(@mock_user)
-    @config.token_datastore.expects(:generate_token).with(@client_app, @mock_user, {:scope => 'scope1 scope2'}).returns(@token)
+    @config.token_datastore.expects(:generate_token).with(@client_app, {:user => @mock_user, :scope => 'scope1 scope2'}).returns(@token)
     assert_equal @token_response, request_handler.access_token_response(@mock_user)
   end
 

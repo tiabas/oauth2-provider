@@ -5,11 +5,11 @@ module OAuth2
       attr_reader :request
 
       def self.from_request_params(params, config_file=nil)
-        unless params.is_a? Hash
-          raise "Request params must be a hash not #{params.class.name}"
+        unless params.is_a?(Hash)
+          raise "Expected a hash but got #{params.class.name}: #{params.inspect}"
         end
-        req = OAuth2::Server::Request.new(params)
-        return new(req, config_file)
+        request = OAuth2::Server::Request.new(params)
+        new(request, config_file)
       end
 
       def initialize(request, config_file=nil)
@@ -44,7 +44,10 @@ module OAuth2
         unless @request.response_type?(:code)
           raise OAuth2Error::UnsupportedResponseType, "unsupported response_type #{@response_type}"
         end
-        @code_datastore.generate_authorization_code client_application, user, redirect_uri
+        @code_datastore.generate_authorization_code(
+          :client => client_application,
+          :user => user,
+          :redirect_uri => redirect_uri)
       end
 
       def authorization_code_response(user)
@@ -66,19 +69,18 @@ module OAuth2
         #   :expires_in => 3600,
         #   :refresh_token => "tGzv3JOkF0XG5Qx2TlKWIA",
         # }
-        return @token unless @token.nil?
-
         @request.validate!
 
         auth_client = verify_client_id
 
+        #TODO: consider leaving the verification below to the programmer in custom classes
         if auth_user.nil? && !['refresh_token', 'client_credentials'].include?(@request.grant_type.to_s)
           raise "A user must be specified for this type of request"
         end
 
         unless (@request.grant_type || @request.response_type?(:token))
           # grant type validity is checked in the request object. Therefore if this
-          # condition fails, the response_type is to blame
+          # condition fails, the response_type is the most likely culprit
           raise OAuth2Error::InvalidRequest, "#response_type: #{@response_type} is not valid for this request"
         end
 
@@ -93,9 +95,10 @@ module OAuth2
 
         elsif @request.grant_type?(:client_credentials)
           verify_client_credentials
-        end
 
-        if @request.grant_type?(:refresh_token) 
+        elsif @request.grant_type?(:refresh_token) 
+          # the refresh token grant type requires no further processing. Therefore return the token and
+          # call it a day or bitch about being given a bogus token
           @token = @token_datastore.from_refresh_token(@request.refresh_token)
           unless @token
             raise OAuth2::OAuth2Error::InvalidRequest, "invalid refresh token"
@@ -103,11 +106,13 @@ module OAuth2
           return @token
         end
 
+        opts[:scope] = @request.scope
+        opts[:user]  = auth_user
+
         # run some user code before generating token
         yield if block_given?
 
-        opts[:scope] = @request.scope
-        @token = @token_datastore.generate_token(auth_client, auth_user, opts) 
+        @token = @token_datastore.generate_token(auth_client, opts) 
 
         # deactivate used authorization code if present
         code.deactivate! unless code.nil?
@@ -164,10 +169,10 @@ module OAuth2
 
       def verify_authorization_code
         @request.validate!
-        # TODO:
-        # consider doing the find thru the client application
-        # client_application.authorization_codes.where @request.code, @request.redirect_uri
-        auth_code = @code_datastore.verify_authorization_code client_application, @request.code, redirect_uri
+        auth_code = @code_datastore.verify(
+          :client => client_application,
+          :code => @request.code,
+          :redirect_uri => redirect_uri)
         if auth_code.nil? || auth_code.expired? || auth_code.deactivated?
           raise OAuth2::OAuth2Error::InvalidGrant, "invalid authorization code"
         end

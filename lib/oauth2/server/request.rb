@@ -195,7 +195,7 @@ module OAuth2
         @redirect_uri 
       end
 
-      def to_hsh
+      def to_hash
         {
           :client_id     => @client_id,
           :client_secret => @client_secret,
