@@ -4,7 +4,7 @@ needed to handle all the authentication flows that are available described in th
 client authentication requests. These classes handle all the business logic for verifying the request parameters.
 
 ## Installation
-  gem install oauth2-ruby
+ Download source files and specify the path in your Gemfile
 
 ## Resources
 * [View Source on GitHub][code]
