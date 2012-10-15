@@ -99,7 +99,9 @@ module OAuth2
         elsif @request.grant_type?(:refresh_token) 
           # the refresh token grant type requires no further processing. Therefore return the token and
           # call it a day or bitch about being given a bogus token
-          @token = @token_datastore.from_refresh_token(@request.refresh_token)
+          @token = @token_datastore.from_refresh_token(
+            :client => client_application,
+            :refresh_token => @request.refresh_token)
           unless @token
             raise OAuth2::OAuth2Error::InvalidRequest, "invalid refresh token"
           end
@@ -173,7 +175,7 @@ module OAuth2
           :client => client_application,
           :code => @request.code,
           :redirect_uri => redirect_uri)
-        if auth_code.nil? || auth_code.expired? || auth_code.deactivated?
+        if(auth_code.nil? || auth_code.expired? || auth_code.deactivated?)
           raise OAuth2::OAuth2Error::InvalidGrant, "invalid authorization code"
         end
         auth_code
