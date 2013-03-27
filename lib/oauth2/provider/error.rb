@@ -1,7 +1,7 @@
 require 'addressable/uri'
 
 module OAuth2
-  module OAuth2Error
+  module OAuth2::Provider::Error
     class Error < StandardError
       
       class << self; attr_accessor :code; end
@@ -44,7 +44,7 @@ module OAuth2
         end
         OAuth2::Helper.build_response_uri request.redirect_uri, :query => self.to_hash
       rescue Exception => e
-        raise OAuth2::OAuth2Error::ServerError, e.message
+        raise OAuth2::Provider::Error::ServerError, e.message
       end
     end
 

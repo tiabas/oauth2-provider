@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name         = 'oauth2-server'
-  s.version      = '0.8.0'
+  s.version      = '0.1.0'
   s.date         = '2012-10-15'
   s.summary      = "OAuth2 server-side wrapper"
   s.description  = "A ruby wrapper for handling serverside OAuth2 requests"

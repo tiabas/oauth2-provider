@@ -22,6 +22,7 @@
 *.exe
 *.o
 *.so
+*.gem
 
 # Packages #
 ############
