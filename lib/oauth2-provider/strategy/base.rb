@@ -51,21 +51,25 @@ module OAuth2
 
         def verify_request_scope
           # return true if @token_datastore.validate_scope(@request.scope)
-          # raise OAuth2::Provider::Error::InvalidRequest, "invalid scope" 
+          # raise OAuth2::Provider::Error::InvalidRequest, "invalid scope"
         end
 
         def verify_redirect_uri
           # TODO: parse the URI hostname and path from request redirect
-          @redirect_uri = @request.redirect_uri || client_application.redirect_uri
-          if !client_application.validate_redirect_uri(@redirect_uri)
-            raise OAuth2::Provider::Error::InvalidRequest, "invalid redirect uri"
+          if @request.redirect_uri.nil?
+            @redirect_uri = client_application.redirect_uri
+          else
+            @redirect_uri = @request.redirect_uri
+            if !client_application.validate_redirect_uri(@redirect_uri)
+              raise OAuth2::Provider::Error::InvalidRequest, "invalid redirect uri"
+            end
           end
-          @redirect_uri 
+          @redirect_uri
         end
 
       private
 
-        # convenience method to build response URI  
+        # convenience method to build response URI
         def build_response_uri(redirect_uri, opts={})
           query= opts[:query]
           fragment= opts[:fragment]
