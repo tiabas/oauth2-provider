@@ -11,7 +11,7 @@ class MiniTest::Unit::TestCase
   end
 end
 
-require 'unit/server/request_test'
-require 'unit/server/authorization_code_test'
+require 'request_test'
+require 'strategy/authorization_code_test'
 
 # require 'unit/server/request_handler_test'
