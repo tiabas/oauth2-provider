@@ -1,5 +1,5 @@
 module OAuth2
-  module Server
+  module Provider
     class Config
 
       attr_reader :token_datastore, :code_datastore, :client_datastore, :user_datastore 

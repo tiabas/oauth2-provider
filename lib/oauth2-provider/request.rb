@@ -34,7 +34,7 @@ module OAuth2
 
         # REQUIRED: Either response_type or grant_type  
         unless (@response_type || @grant_type)
-          raise OAuth2::Provider::Error::InvalidRequest, "response_type or grant_type is required"
+          raise OAuth2::Provider::Error::InvalidRequest, "Response type or grant type is required"
         end
 
         # validate response_type if given
@@ -49,31 +49,26 @@ module OAuth2
 
       def validate_client_id
         return true unless @client_id.nil?
-        raise OAuth2::Provider::Error::InvalidRequest, "client_id required"
+        raise Provider::Error::InvalidRequest, "Client ID required"
       end
 
       def validate_scope
-        return if (@scope.nil? || @scope.strip.empty?)
-        #TODO check scope
+        return true if (@scope.nil? || @scope.strip.empty?)
+        #TODO check if provided scope exists
         @errors[:scope] = "invalid scope"
-        raise OAuth2::Provider::Error::InvalidRequest, @errors[:scope]
+        raise Provider::Error::InvalidRequest, @errors[:scope]
       end
 
       def validate_redirect_uri
-        return true if @redirect_uri.empty
+        return true if (!@redirect_uri || @redirect_uri.empty?)
         
-        @errors[:redirect_uri] = []
-
         uri = Addressable::URI.parse(@redirect_uri)
         unless ["https", "http"].include? uri.scheme 
-            @errors[:redirect_uri] << "unsupported uri scheme"
-        end
-        unless uri.fragment.nil?
-            @errors[:redirect_uri] << "uri may not include fragment"
+          raise OAuth2::Provider::Error::InvalidRequest, "Unsupported uri scheme, #{uri.scheme}"
         end
 
-        if @errors[:redirect_uri].any?
-          raise OAuth2::Provider::Error::InvalidRequest, @errors[:redirect_uri].join(", ")
+        unless uri.fragment.nil?
+          raise OAuth2::Provider::Error::InvalidRequest, "Redirect URI must not contain fragment"
         end
 
         @redirect_uri 
@@ -81,20 +76,20 @@ module OAuth2
 
       def validate_response_type
         if @response_type.nil?
-          raise OAuth2::Provider::Error::InvalidRequest, "response_type required"
+          raise OAuth2::Provider::Error::InvalidRequest, "Response type required"
         end
         if !RESPONSE_TYPES.include?(@response_type.to_sym)
-          raise OAuth2::Provider::Error::UnsupportedResponseType, "response_type not supported"
+          raise OAuth2::Provider::Error::UnsupportedResponseType, "Response type not supported"
         end
         true
       end
 
       def validate_grant_type
         if @grant_type.nil?
-          raise OAuth2::Provider::Error::InvalidRequest, "grant_type required"
+          raise OAuth2::Provider::Error::InvalidRequest, "Grant type required"
         end
         if !GRANT_TYPES.include?(@grant_type.to_sym)
-          raise OAuth2::Provider::Error::UnsupportedGrantType, "grant_type not supported"
+          raise OAuth2::Provider::Error::UnsupportedGrantType, "Grant type not supported"
         end
         true 
       end

@@ -17,10 +17,8 @@ module OAuth2
           unless request.is_a? OAuth2::Provider::Request
             raise "OAuth2::Provider::Request expected but got #{request.class.name}"
           end
-          @request = request
-          @request.validate!
-
           @config = Config.new(config_file)
+          @request = request
           @user_datastore = @config.user_datastore
           @client_datastore = @config.client_datastore
           @token_datastore = @config.token_datastore
@@ -75,12 +73,12 @@ module OAuth2
           fragment= opts[:fragment]
           unless ((query && query.is_a?(Hash)) || (fragment && fragment.is_a?(Hash)))
             # TODO: make sure error message is more descriptive i.e query if query, fragment if fragment
-            raise "Hash expected but got: query: #{query.inspect}, fragment: #{fragment.inspect}"
+            raise "Hash expected but got query as #{query.inspect} and fragment as #{fragment.inspect}"
           end
           uri = Addressable::URI.parse redirect_uri
           temp_query = uri.query_values || {}
           temp_frag = uri.fragment || nil
-          uri.query_values = temp_query.merge(query) unless query.nil?
+          uri.query_values = temp_query.merge(query) unless query.empty?
           uri.fragment = Addressable::URI.form_encode(fragment) unless fragment.nil?
           uri.to_s
         end

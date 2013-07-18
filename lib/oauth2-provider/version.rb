@@ -1,3 +1,5 @@
 module OAuth2
-  VERSION = "0.2.0"
+	module Provider
+  		VERSION = "0.2.0"
+  	end
 end
