@@ -1,52 +1,32 @@
-module OAuth2
-  module Provider
-    module Strategy
-      class AuthorizationCode
+module OAuth2Provider
+  module Strategy
+    class AuthorizationCode
 
-        def authorization_code(user)
-          unless @request.response_type?(:code)
-            raise OAuth2::Provider::Error::UnsupportedResponseType, "unsupported response_type #{@response_type}"
-          end
-          @code_datastore.generate_authorization_code(
-            :client => client_application,
-            :user => user,
-            :redirect_uri => redirect_uri)
+      def authorization_code(opts={})
+        unless @request.response_type?(:code)
+          raise OAuth2Provider::Error::UnsupportedResponseType, "unsupported response_type #{@response_type}"
+        end
+        @adapter.generate_authorization_code(@request, opts)
+      end
+
+      def access_token(opts={})
+        @adapter.token_from_authorization_code(@request, opts) 
+      end
+
+      def validate!
+        super
+        unless @request.code
+          raise OAuth2Provider::Error::InvalidRequest, "authorization code required"
         end
 
-        def access_token(opts={})
-          code = verify_authorization_code
-
-          opts[:scope] = @request.scope
-          opts[:user]  = code.user
-          opts[:client]= client_application
-          @token = @token_datastore.generate_token(opts) 
-
-          code.deactivate!
-
-          @token
+        unless  @adapter.authorization_code_valid?(@request)
+          raise OAuth2Provider::Error::InvalidGrant, "invalid authorization code"
         end
 
-        def authorization_redirect_uri(user)
-          build_response_uri redirect_uri, :query => authorization_code(user)
+        unless @adapter.redirect_uri_valid?(@request)
+          raise OAuth2Provider::Error::InvalidGrant, "invalid redirect_uri"
         end
-
-      private
-
-        def verify_authorization_code
-          auth_code = @code_datastore.verify(
-            :client => client_application,
-            :code => @request.code,
-            :redirect_uri => redirect_uri)
-          if(auth_code.nil? || auth_code.expired? || auth_code.deactivated?)
-            raise OAuth2::Provider::Error::InvalidGrant, "invalid authorization code"
-          end
-          auth_code
-        end
-
-        def validate_authorization_code
-          return true unless code.nil?
-          raise OAuth2::Provider::Error::InvalidRequest, "code required"
-        end
+        yield self
       end
     end
   end

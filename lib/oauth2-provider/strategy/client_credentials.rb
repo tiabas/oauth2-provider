@@ -1,26 +1,24 @@
-module OAuth2
+module OAuth2Provider
   module Strategy
     class ClientCredentials < Base
 
       attr_reader :client_id, :client_secret
 
       def access_token(opts={})
-        validate_client_credentials
-        {
-          :scope => @request.scope
-        }.merge(opts)
-        @token_datastore.generate_client_token(client_application, opts)
+        @adapter.token_from_client_credentials(@request, opts)
       end
 
-      def validate_client_credentials
-        unless @client_id && @client_secret
-          @errors[:client] = []
-          @errors[:client] << "client_id"     if @client_id.nil?
-          @errors[:client] << "client_secret" if @client_secret.nil?
-          @errors[:client] << "required"
-          raise OAuth2::Provider::Error::InvalidRequest, @errors[:client].join(" ")
+      def validate!
+        # NOTE: We do not call `super` here to prevent facilitating harvesting of 
+        # valid client ID's
+        unless @client_secret
+          raise OAuth2Provider::Error::InvalidRequest, "client_secret required"
         end
-        true
+
+        unless @adapter.client_credentials_valid?(@request)
+          raise OAuth2Provider::Error::InvalidRequest, "invalid client credentials"
+        end
+        yield self
       end
     end
   end

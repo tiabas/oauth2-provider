@@ -13,12 +13,12 @@ client authentication requests. These classes handle all the business logic for 
 [code]: https://github.com/tiabas/oauth2-ruby
 [issues]: https://github.com/tiabas/oauth2-ruby/issues
 
-## OAuth2::Provider::Request
+## OAuth2Provider::Request
 The request class takes care of validating the parameters that are sent to the server before anything can be done with them. Depending on the combinations of 
 the parameters check are made to ensure that all required parameters for a given authentication flow exist and are properly formatted. If validation fails, an OAuth2 error is thrown.
 
 ```ruby
-request = OAuth2::Provider::Request.new({
+request = OAuth2Provider::Request.new({
                 :client_id # > 's6BhdRkqt3',
                 :response_type # > 'code',
                 :redirect_uri # > 'https://client.example.com/oauth/v2/cb',
@@ -27,18 +27,18 @@ request = OAuth2::Provider::Request.new({
 request.valid?
 # > true
 
-request = OAuth2::Provider::Request.new({
+request = OAuth2Provider::Request.new({
             :client_id # > 's6BhdRkqt3',
             :redirect_uri # > 'https://client.example.com/oauth/v2/cb',
             :state # > 'xyz'
             })
 request.valid?
-# > OAuth2::Provider::Error::InvalidRequest: response_type or grant_type is required
+# > OAuth2Provider::Error::InvalidRequest: response_type or grant_type is required
 ```
 
-## OAuth2::Provider::RequestHandler
+## OAuth2Provider::RequestHandler
 The request handler contains the logic that is needed to verify request parameters from the client and issue an access token or authorization code depending on
-the response type or grant type. This class takes two arguments, an OAuth2::Provider::Request and a string representing the path to your config file that indicates the class names of your datastores. Your datastores are the classes that handle the storage and retrieval of data needed for the OAuth flow. You should create datastores for the following data access_token, client_application, authorization_code, user and define them in the config.yml as follows:
+the response type or grant type. This class takes two arguments, an OAuth2Provider::Request and a string representing the path to your config file that indicates the class names of your datastores. Your datastores are the classes that handle the storage and retrieval of data needed for the OAuth flow. You should create datastores for the following data access_token, client_application, authorization_code, user and define them in the config.yml as follows:
 
 ```yaml
     # oauth.yml
@@ -52,13 +52,13 @@ the response type or grant type. This class takes two arguments, an OAuth2::Prov
 Here an example of how to use the request handler:
 
 ```ruby
-request = OAuth2::Provider::Request.new({
+request = OAuth2Provider::Request.new({
                 :client_id # > 's6BhdRkqt3',
                 :response_type # > 'code',
                 :redirect_uri # > 'https://client.example.com/oauth/v2/cb',
                 :state # > 'xyz'
                 })
-handler = OAuth2::Provider::RequestHandler.new(request, '/path/to/oauth.yml')
+handler = OAuth2Provider::RequestHandler.new(request, '/path/to/oauth.yml')
 
 handler.authorization_redirect_uri
 # > "https://client.example.com/oauth/v2/cb?code=AjBfNiVZ93pxKqfJ1Q3RdKrgWHYPxYmgFTpPqPVIdbg6nPPAxMzQ1MDEzNjc1&state=xyz"
@@ -67,7 +67,7 @@ handler.authorization_code_response
 # > { :code# >"O0RfagVSxCn6svUlxLQvSNSpCCnImfMv2zifYDPZXO19wiPYxMzQ1MDEzNzU3", :state# >"xyz" }
 
 user = User.find_by_email('abc@xyz.com') #create the user for whom we wish get a token
-request_2 = OAuth2::Provider::Request.new({
+request_2 = OAuth2Provider::Request.new({
                 :client_id # > 's6BhdRkqt3',
                 :grant_type # > 'authorization_code',
                 :code # > 'O0RfagVSxCn6svUlxLQvSNSpCCnImfMv2zifYDPZXO19wiPYxMzQ1MDEzNzU3',
@@ -75,12 +75,12 @@ request_2 = OAuth2::Provider::Request.new({
                 :state # > 'xyz'
                 })
 
-handler_2 = OAuth2::Provider::RequestHandler.new(request_2, '/path/to/oauth.yml')
+handler_2 = OAuth2Provider::RequestHandler.new(request_2, '/path/to/oauth.yml')
 
 # let's try to get the authorization code again
 handler_2.authorization_redirect_uri
 # we get an error
-# > OAuth2::Provider::Error::UnsupportedResponseType: unsupported response_typev
+# > OAuth2Provider::Error::UnsupportedResponseType: unsupported response_typev
 
 handler_2.access_token_redirect_uri(user)v
 # > "https://client.example.com/oauth/v2/cb#access_token=YZsr0dfkzcygr2q3rxB6g9cJdqcF7M5PjankAFG8QKz695mUT8xMzQ1MDE0MDk3&token_type=Bearer&expires_in=3600&refresh_token=j2zmwCR7BbGDjP4DySRK1J2nw8O1V4aQXY3wre6ohQNNNeOwNtgxMzQ1MDE0MDk3&state=xyz"
@@ -91,14 +91,14 @@ handler_2.access_token_response(user)
 
 ## OAuth2::Error
 Whenever an OAuth operation fails an error of this type will be thrown. This class provided a convenience method to turn the error into an http response when
-provided with an OAuth2::Provider::Request object
+provided with an OAuth2Provider::Request object
 
 ```ruby
-e = OAuth2::Provider::Error::AccessDenied.new "the user denied your request"
+e = OAuth2Provider::Error::AccessDenied.new "the user denied your request"
 e.to_hsh
 # > {:error# >"access_denied", :error_description# >"the user denied your request"}
 
-request = OAuth2::Provider::Request.new({
+request = OAuth2Provider::Request.new({
                 :client_id # > 's6BhdRkqt3',
                 :response_type # > 'code',
                 :redirect_uri # > 'https://client.example.com/oauth/v2/cb',

@@ -1,19 +1,23 @@
 require 'openssl'
 require 'base64'
 
-module OAuth2
+module OAuth2Provider
   module Helper
-     # convenience method to build response URI  
-      def self.build_response_uri(redirect_uri, opts={})
-        query= opts[:query]
-        fragment= opts[:fragment]
-        uri = Addressable::URI.parse redirect_uri
-        temp_query = uri.query_values || {}
-        temp_frag = uri.fragment || nil
-        uri.query_values = temp_query.merge(query) unless query.nil?
-        uri.fragment = Addressable::URI.form_encode(fragment) unless fragment.nil?
-        uri.to_s
+
+    # convenience method to build response URI
+    def self.build_response_uri(redirect_uri, opts={})
+      query= opts[:query]
+      fragment= opts[:fragment]
+      unless ((query && query.is_a?(Hash)) || (fragment && fragment.is_a?(Hash)))
+        # TODO: make sure error message is more descriptive i.e query if query, fragment if fragment
+        raise "Hash expected but got: query: #{query.inspect}, fragment: #{fragment.inspect}"
       end
+      uri = Addressable::URI.parse redirect_uri
+      temp_query = uri.query_values || {}
+      uri.query_values = temp_query.merge(query) unless query.nil?
+      uri.fragment = Addressable::URI.form_encode(fragment) unless fragment.nil?
+      uri.to_s
+    end
 
     # Escape +value+ by URL encoding all non-reserved character.
     #

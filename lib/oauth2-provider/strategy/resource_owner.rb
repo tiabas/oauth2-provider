@@ -1,38 +1,22 @@
-module OAuth2
+module OAuth2Provider
   module Strategy
     class ResourceOwner
 
-      def user
-        @user || authenticate_user_credentials
-      end
-
-      def authenticate_user_credentials
-        validate_user_credentials
-        @user = @user_datastore.authenticate request.username, request.password
-        if @user.nil?
-          raise OAuth2::Provider::Error::AccessDenied, "user authentication failed"
-        end
-        @user
-      end
-
       def access_token(opts={})
-        opts[:scope] = @request.scope
-        opts[:user]  = authenticate_user_credentials
-        opts[:client]= client_application
-
-        @token = @token_datastore.generate_token(opts) 
-        @token
+        @adapter.generate_access_token(@request, opts) 
       end
 
-      def validate_user_credentials
-        if @username.nil? || @password.nil?
+      def validate!
+        super
+        unless @username && @password
           @errors[:user_credentials] = []
-          @errors[:user_credentials] << "username" if @username.nil?
-          @errors[:user_credentials] << "password" if @password.nil?
-          @errors[:user_credentials] << "required"
-          raise OAuth2::Provider::Error::InvalidRequest, @errors[:user_credentials].join(" ")
+          @errors[:user_credentials] << "username required" unless @username
+          @errors[:user_credentials] << "password required" unless @password
+          raise OAuth2Provider::Error::InvalidCredentials, @errors[:user_credentials].join(", ")
         end
-        true
+        unless @adapter.resource_owner_credentials_valid?(@request)
+          raise OAuth2Provider::Error::AccessDenied, "invalid user credentials"
+        end
       end
     end
   end
