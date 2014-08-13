@@ -1,24 +1,21 @@
-module OAuth2
-  module Provider
-    module Strategy
-      class RefreshToken < Base
+module OAuth2Provider
+  module Strategy
+    class RefreshToken < Base
 
-        def access_token(opts={})
-          # the refresh token grant type requires no further processing. Therefore return the token and
-          # call it a day or bitch about being given a bogus token
-          @token = @token_datastore.from_refresh_token(
-            :client => client_application,
-            :refresh_token => @request.refresh_token)
-          unless @token
-            raise OAuth2::Provider::Error::InvalidRequest, "invalid refresh token"
-          end
-          @token
+      def access_token(opts={})
+        @adapter.token_from_refresh_token(@request, opts)
+      end
+
+      def validate!
+        super
+        unless refresh_token
+          raise OAuth2Provider::Error::InvalidRequest, "refresh token required"
         end
 
-        def validate_refresh_token
-          return true unless refresh_token.nil?
-          raise OAuth2::Provider::Error::InvalidRequest, "refresh_token required"
+        unless @adapter.refresh_token_valid?(@request)
+          raise OAuth2Provider::Error::InvalidRequest, "invalid refresh token"
         end
+        yield self
       end
     end
   end
