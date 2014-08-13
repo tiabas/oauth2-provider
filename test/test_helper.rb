@@ -2,7 +2,6 @@ require 'test/unit'
 require 'mocha'
 require 'oauth2-provider'
 
-
 TEST_ROOT = File.dirname(__FILE__)
 
 class MiniTest::Unit::TestCase
@@ -12,6 +11,7 @@ class MiniTest::Unit::TestCase
 end
 
 require 'request_test'
-require 'strategy/authorization_code_test'
+require 'strategy/implicit_grant_test'
+require 'strategy/client_credentials_test'
 
 # require 'unit/server/request_handler_test'

@@ -1,5 +1,5 @@
 module OAuth2Provider
-  module Grant
+  module Strategy
     class Implicit < Base
 
       def access_token(opts={})

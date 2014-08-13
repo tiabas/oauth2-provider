@@ -1,6 +1,5 @@
 require 'oauth2-provider/version'
 require 'oauth2-provider/helper'
-require 'oauth2-provider/config'
 require 'oauth2-provider/error'
 require 'oauth2-provider/request'
 require 'oauth2-provider/strategy/base'

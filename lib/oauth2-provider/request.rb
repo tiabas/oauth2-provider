@@ -29,50 +29,50 @@ module OAuth2Provider
 
     def valid?
       # REQUIRED: Check that client_id is valid
-      validate_client_id
+      validate_client_id!
 
       # OPTIONAL: Check the provided redirect URI is valid
-      validate_redirect_uri
+      validate_redirect_uri!
 
       # REQUIRED: Either response_type or grant_type  
       unless (@response_type || @grant_type)
-        raise OAuth2Provider::Error::InvalidRequest, "response_type or grant_type is required"
+        raise Error::InvalidRequest, "response_type or grant_type is required"
       end
 
       if @response_type
-        validate_response_type
+        validate_response_type!
       else
-        validate_grant_type
+        validate_grant_type!
       end
     end
 
-    def validate_response_type
+    def validate_response_type!
       if @response_type.nil?
-        raise OAuth2Provider::Error::InvalidRequest, "response_type required"
+        raise Error::InvalidRequest, "response_type required"
       end
       if !RESPONSE_TYPES.include?(@response_type.to_sym)
-        raise OAuth2Provider::Error::UnsupportedResponseType, "unsupported response_type"
+        raise Error::UnsupportedResponseType, "unsupported response_type"
       end
       true
     end
 
-    def validate_grant_type
+    def validate_grant_type!
       if @grant_type.nil?
-        raise OAuth2Provider::Error::InvalidRequest, "grant_type required"
+        raise Error::InvalidRequest, "grant_type required"
       end
       if !GRANT_TYPES.include?(@grant_type.to_sym)
-        raise OAuth2Provider::Error::UnsupportedGrantType, "unsupported grant_type"
+        raise Error::UnsupportedGrantType, "unsupported grant_type"
       end
       true 
     end
 
-    def validate_client_id
-      if @client_id.nil?
-        raise OAuth2Provider::Error::InvalidRequest, "client_id is required"
+    def validate_client_id!
+      if @client_id.nil? || @client_id.empty?
+        raise Error::InvalidRequest, "client_id is required"
       end
     end
 
-    def validate_redirect_uri
+    def validate_redirect_uri!
       return if (@redirect_uri.nil? || @redirect_uri.empty?)
       
       @errors[:redirect_uri] = []
@@ -87,7 +87,7 @@ module OAuth2Provider
       end
 
       if @errors[:redirect_uri].any?
-        raise OAuth2Provider::Error::InvalidRequest, @errors[:redirect_uri].join(", ")
+        raise Error::InvalidRequest, @errors[:redirect_uri].join(", ")
       end
 
       @redirect_uri 
