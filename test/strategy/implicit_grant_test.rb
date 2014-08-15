@@ -27,4 +27,8 @@ class ImplicitGrantTest < MiniTest::Unit::TestCase
     @adapter.expects(:generate_access_token).with(@request, {})
     grant.access_token
   end
+
+  def test_raise_validation_error
+
+  end
 end

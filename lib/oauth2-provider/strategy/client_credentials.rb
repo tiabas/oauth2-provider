@@ -9,9 +9,9 @@ module OAuth2Provider
       end
 
       def validate!
-        # NOTE: We do not call `super` here to prevent facilitating harvesting of 
+        # NOTE: We do not call `super` here to prevent facilitating harvesting of
         # valid client ID's
-        unless @client_secret
+        unless @request.client_secret
           raise OAuth2Provider::Error::InvalidRequest, "client_secret required"
         end
 
