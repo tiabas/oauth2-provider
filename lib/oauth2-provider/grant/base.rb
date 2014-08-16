@@ -16,7 +16,7 @@ module OAuth2Provider
         unless @adapter.client_id_valid?(@request)
           raise OAuth2Provider::Error::InvalidRequest, "unknown client"
         end
-        yield self
+        yield self if block_given?
       end
 
       def valid?

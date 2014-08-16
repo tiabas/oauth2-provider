@@ -18,7 +18,7 @@ module OAuth2Provider
         unless @adapter.client_credentials_valid?(@request)
           raise OAuth2Provider::Error::InvalidRequest, "invalid client credentials"
         end
-        yield self
+        super
       end
     end
   end

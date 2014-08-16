@@ -10,7 +10,7 @@ module OAuth2Provider
       end
 
       def access_token(opts={})
-        @adapter.token_from_authorization_code(@request, opts) 
+        @adapter.token_from_authorization_code(@request, opts)
       end
 
       def validate!
@@ -26,7 +26,7 @@ module OAuth2Provider
         unless @adapter.redirect_uri_valid?(@request)
           raise OAuth2Provider::Error::InvalidGrant, "invalid redirect_uri"
         end
-        yield self
+        super
       end
     end
   end

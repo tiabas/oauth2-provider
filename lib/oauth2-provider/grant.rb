@@ -1,0 +1,6 @@
+require_relative 'grant/base'
+require_relative 'grant/implicit'
+require_relative 'grant/authorization_code'
+require_relative 'grant/refresh_token'
+require_relative 'grant/password'
+require_relative 'grant/client_credentials'

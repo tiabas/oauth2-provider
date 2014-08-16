@@ -7,15 +7,14 @@ module OAuth2Provider
       end
 
       def validate!
-        super
-        unless refresh_token
-          raise OAuth2Provider::Error::InvalidRequest, "refresh token required"
+        unless @request.refresh_token
+          raise OAuth2Provider::Error::InvalidGrant, "refresh token required"
         end
 
         unless @adapter.refresh_token_valid?(@request)
-          raise OAuth2Provider::Error::InvalidRequest, "invalid refresh token"
+          raise OAuth2Provider::Error::InvalidGrant, "invalid refresh token"
         end
-        yield self
+        super
       end
     end
   end

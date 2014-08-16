@@ -1,7 +1,5 @@
-require_relative "test_helper"
-
 class RequestTest < MiniTest::Unit::TestCase
-  
+
   def setup
     @code = 'G3Y6jU3a'
     @client_id = 's6BhdRkqt3'
@@ -27,7 +25,7 @@ class RequestTest < MiniTest::Unit::TestCase
                         })
     assert_raises OAuth2Provider::Error::InvalidRequest do
       request.validate_response_type!
-    end 
+    end
   end
 
   def test_should_raise_unsupported_response_type_with_invalid_response_type
@@ -39,7 +37,7 @@ class RequestTest < MiniTest::Unit::TestCase
                         })
     assert_raises OAuth2Provider::Error::UnsupportedResponseType do
       request.validate_response_type!
-    end 
+    end
   end
 
   def test_should_raise_invalid_request_error_with_missing_grant_type
@@ -51,7 +49,7 @@ class RequestTest < MiniTest::Unit::TestCase
                         })
     assert_raises OAuth2Provider::Error::InvalidRequest do
       request.validate_grant_type!
-    end 
+    end
   end
 
   # Authorization code flow
@@ -100,7 +98,7 @@ class RequestTest < MiniTest::Unit::TestCase
                         })
     assert_raises OAuth2Provider::Error::UnsupportedGrantType do
       request.validate_grant_type!
-    end 
+    end
   end
 
   # Implicit grant flow

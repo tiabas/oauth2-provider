@@ -2,6 +2,14 @@ require 'test/unit'
 require 'mocha'
 require 'oauth2-provider'
 
+require 'request_test'
+require 'grant/base_test'
+require 'grant/implicit_test'
+require 'grant/client_credentials_test'
+require 'grant/password_test'
+require 'grant/refresh_token_test'
+require 'grant/refresh_token_test'
+
 TEST_ROOT = File.dirname(__FILE__)
 
 class MiniTest::Unit::TestCase
@@ -9,9 +17,3 @@ class MiniTest::Unit::TestCase
     return 'https://client.example.com/oauth_v2/cb'
   end
 end
-
-require 'request_test'
-require 'strategy/implicit_grant_test'
-require 'strategy/client_credentials_test'
-
-# require 'unit/server/request_handler_test'
