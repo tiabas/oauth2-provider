@@ -1,47 +1,46 @@
 module OAuth2
   module DataStore
     class AuthorizationCodeDataStore < MockDataStore
+      private_class_method :new
 
-        private_class_method :new
+      class << self
+        include OAuth2::Helper
 
-        class << self
-          include OAuth2::Helper
-
-          def self.generate_authorization_code(c_id, redirect)
-            self.instances ||= []
-            kode = new
-            kode.merge!({
-                  :id => self.instances.length,
-                  :code => generate_urlsafe_key,
-                  :redirect_uri => redirect,
-                  :client_id => c_id,
-                  :deactivated_at => nil,
-                  :created_at => Time.now
-                })
-            self.instances << kode
-          end
-
-          def self.fetch_authorization_code(c_id, auth_code, redirect)
-            kode = find :client_id => c_id, :code => auth_code,:redirect_uri => redirect
-          end
+        def self.generate_authorization_code(c_id, redirect)
+          self.instances ||= []
+          kode = new
+          kode.merge!(
+                        id: self.instances.length,
+                        code: generate_urlsafe_key,
+                        redirect_uri: redirect,
+                        client_id: c_id,
+                        deactivated_at: nil,
+                        created_at: Time.now
+                      )
+          self.instances << kode
         end
 
-        def deactivate!
-          self[:deactivated_at] = Time.now
-          save
+        def self.fetch_authorization_code(c_id, auth_code, redirect)
+          kode = find client_id: c_id, code: auth_code, redirect_uri: redirect
         end
+      end
 
-        def expired? 
-          Time.now > self[:created_at]+600 
-        end
+      def deactivate!
+        self[:deactivated_at] = Time.now
+        save
+      end
 
-        def inactive?
-          !!self[:deactivated_at]
-        end
+      def expired?
+        Time.now > self[:created_at] + 600
+      end
 
-        def active?
-          !inactive?
-        end
+      def inactive?
+        !!self[:deactivated_at]
+      end
+
+      def active?
+        !inactive?
+      end
     end
   end
 end

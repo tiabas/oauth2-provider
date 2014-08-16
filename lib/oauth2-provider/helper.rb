@@ -3,14 +3,13 @@ require 'base64'
 
 module OAuth2Provider
   module Helper
-
     # convenience method to build response URI
-    def self.build_response_uri(redirect_uri, opts={})
-      query= opts[:query]
-      fragment= opts[:fragment]
-      unless ((query && query.is_a?(Hash)) || (fragment && fragment.is_a?(Hash)))
+    def self.build_response_uri(redirect_uri, opts = {})
+      query = opts[:query]
+      fragment = opts[:fragment]
+      unless (query && query.is_a?(Hash)) || (fragment && fragment.is_a?(Hash))
         # TODO: make sure error message is more descriptive i.e query if query, fragment if fragment
-        raise "Hash expected but got: query: #{query.inspect}, fragment: #{fragment.inspect}"
+        fail "Hash expected but got: query: #{query.inspect}, fragment: #{fragment.inspect}"
       end
       uri = Addressable::URI.parse redirect_uri
       temp_query = uri.query_values || {}
@@ -23,14 +22,14 @@ module OAuth2Provider
     #
     # See Also: {OAuth core spec version 1.0, section 5.1}[http://oauth.net/core/1.0#rfc.section.5.1]
     def escape(value)
-      URI::escape(value.to_s, OAuth::RESERVED_CHARACTERS)
+      URI.escape(value.to_s, OAuth::RESERVED_CHARACTERS)
     rescue ArgumentError
-      URI::escape(value.to_s.force_encoding(Encoding::UTF_8), OAuth::RESERVED_CHARACTERS)
+      URI.escape(value.to_s.force_encoding(Encoding::UTF_8), OAuth::RESERVED_CHARACTERS)
     end
 
     # Generate a random key of up to +size+ bytes. The value returned is Base64 encoded with non-word
     # characters removed.
-    def generate_urlsafe_key(size=48)
+    def generate_urlsafe_key(size = 48)
       seed = Time.now.to_i
       size = size - seed.to_s.length
       Base64.encode64("#{ OpenSSL::Random.random_bytes(size) }#{ seed }").gsub(/\W/, '')
@@ -51,10 +50,10 @@ module OAuth2Provider
     #
     def parse_header(header)
       # decompose
-      params = header[6,header.length].split(/[,=&]/)
+      params = header[6, header.length].split(/[,=&]/)
 
       # odd number of arguments - must be a malformed header.
-      raise OAuth::Error.new("Invalid authorization header") if params.size % 2 != 0
+      fail OAuth::Error.new('Invalid authorization header') if params.size % 2 != 0
 
       params.map! do |v|
         # strip and unescape

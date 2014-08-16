@@ -4,13 +4,13 @@ module OAuth2
       class << self
         attr_accessor :instances
 
-        def find(attrs={})
+        def find(attrs = {})
           found = nil
           index = 0
-          store = self.instances
-          while index < store.length do
+          store = instances
+          while index < store.length
             match = true
-            target = store[index] 
+            target = store[index]
             attrs.each do |k, v|
               match = match & (target[k.to_sym] == v)
             end
@@ -18,7 +18,6 @@ module OAuth2
           end
           target
         end
-
       end
     end
   end
