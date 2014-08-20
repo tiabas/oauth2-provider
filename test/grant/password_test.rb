@@ -1,7 +1,7 @@
-class PasswordTest < MiniTest::Unit::TestCase
+class PasswordTest < Test::Unit::TestCase
   def setup
     @client_id = 's6BhdRkqt3'
-    @adapter = mock
+    @adapter = mock()
     @adapter.stubs(:client_id_valid?).returns(true)
   end
 
@@ -68,7 +68,7 @@ class PasswordTest < MiniTest::Unit::TestCase
                         password: 'kennwort'
                         )
     grant = OAuth2Provider::Strategy::Password.new(request, @adapter)
-    token = mock
+    token = mock()
 
     @adapter.stubs(:resource_owner_credentials_valid?).with(request).returns(true)
     @adapter.expects(:generate_access_token).with(request, {}).returns(token)

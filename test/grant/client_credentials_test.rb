@@ -1,4 +1,4 @@
-class ClientCredentialsTest < MiniTest::Unit::TestCase
+class ClientCredentialsTest < Test::Unit::TestCase
   def setup
     @client_id = 's6BhdRkqt3'
     @client_secret = 'SplxlOBeZQQYbYS6WxSbIA'
@@ -8,7 +8,7 @@ class ClientCredentialsTest < MiniTest::Unit::TestCase
                                              client_secret: @client_secret,
                                              grant_type: 'client_credentials'
                                            )
-    @adapter = mock
+    @adapter = mock()
   end
 
   # Grant type: client_credentials

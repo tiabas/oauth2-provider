@@ -72,7 +72,7 @@ module OAuth2Provider
     end
 
     def validate_redirect_uri!
-      return if @redirect_uri.nil? || @redirect_uri.empty?
+      return true if @redirect_uri.nil? || @redirect_uri.empty?
 
       @errors[:redirect_uri] = []
       uri = Addressable::URI.parse(@redirect_uri)
@@ -88,8 +88,7 @@ module OAuth2Provider
       if @errors[:redirect_uri].any?
         fail Error::InvalidRequest, @errors[:redirect_uri].join(', ')
       end
-
-      @redirect_uri
+      true
     end
   end
 end

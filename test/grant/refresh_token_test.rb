@@ -1,9 +1,10 @@
-class RefreshTokenTest < MiniTest::Unit::TestCase
+class RefreshTokenTest < Test::Unit::TestCase
+
   def setup
     @client_id = 's6BhdRkqt3'
     @client_secret = 'SplxlOBeZQQYbYS6WxSbIA'
     @refresh_token = 'tGzv3JOkF0XG5Qx2TlKWIA'
-    @adapter = mock
+    @adapter = mock()
     @adapter.stubs(:client_id_valid?).returns(true)
   end
 
@@ -41,7 +42,7 @@ class RefreshTokenTest < MiniTest::Unit::TestCase
                     refresh_token: @refresh_token
                 )
     grant = OAuth2Provider::Strategy::RefreshToken.new(request, @adapter)
-    token = mock
+    token = mock()
 
     @adapter.expects(:token_from_refresh_token).with(request, {}).returns(token)
     assert_equal token, grant.access_token

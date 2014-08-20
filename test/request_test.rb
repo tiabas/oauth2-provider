@@ -1,4 +1,4 @@
-class RequestTest < MiniTest::Unit::TestCase
+class RequestTest < Test::Unit::TestCase
   def setup
     @code = 'G3Y6jU3a'
     @client_id = 's6BhdRkqt3'
@@ -119,7 +119,7 @@ class RequestTest < MiniTest::Unit::TestCase
                                             grant_type: 'token',
                                             state: 'xyz'
                                           )
-    assert true, request.validate_redirect_uri!
+    assert_equal true, request.validate_redirect_uri!
   end
 
   def test_should_pass_validation_when_response_type_code_and_valid_redirect_uri

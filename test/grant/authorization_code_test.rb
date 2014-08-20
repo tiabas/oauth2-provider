@@ -1,4 +1,4 @@
-class AuthorizationCodeTest < MiniTest::Unit::TestCase
+class AuthorizationCodeTest < Test::Unit::TestCase
   def setup
     @code = 'G3Y6jU3a'
     @client_id = 's6BhdRkqt3'
@@ -56,8 +56,6 @@ class AuthorizationCodeTest < MiniTest::Unit::TestCase
     grant = OAuth2Provider::Strategy::AuthorizationCode.new(request, @adapter)
     token = mock()
     @adapter.stubs(:token_from_authorization_code).returns(token)
-
-    mock_user = mock()
     assert_equal token, grant.access_token
   end
 end

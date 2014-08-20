@@ -1,4 +1,4 @@
-class BaseTest < MiniTest::Unit::TestCase
+class BaseTest < Test::Unit::TestCase
   def setup
     @code = 'G3Y6jU3a'
     @client_id = 's6BhdRkqt3'
@@ -10,9 +10,9 @@ class BaseTest < MiniTest::Unit::TestCase
     @scope = 'scope1 scope2'
     @token_type = 'Bearer'
     @redirect_uri = 'https://client.example.com/oauth_v2/cb'
-    @client_app = mock
+    @client_app = mock()
     @client_app.stubs(:redirect_uri).returns(@redirect_uri)
-    @token = mock
+    @token = mock()
     @token_response = {
       access_token: @access_token,
       refresh_token: @refresh_token,
